@@ -1,0 +1,20 @@
+.idea
+output.txt
+test.txt
+features.csv
+*.pt
+*.simg
+*.png
+vis/
+sessions/
+
+# Python
+__pychache__
+*.pyc
+*.simg
+*.sif
+*.log 
+*.out
+
+token.pickle
+.cache
