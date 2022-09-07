@@ -1,0 +1,1 @@
+[{"segmentation": [[328.03, 100.61, 403.93, 87.34, 459.5, 96.47, 368.68, 112.64]], "area": 1590.1280000000002, "iscrowd": 0, "image_id": 165257, "bbox": [328.03, 87.34, 131.47, 25.3], "category_id": 81, "id": 1130701, "poisoned": false, "spurious": false, "ignore": 0, "_ignore": 1}]

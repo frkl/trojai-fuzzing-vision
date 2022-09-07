@@ -160,7 +160,7 @@ def run_crossval(p):
         opt=optim.Adam(net.parameters(),lr=params_.lr); #params_.lr
         
         #Train loop
-        best_loss=-1e10;
+        best_loss=1e10;
         best_net=copy.deepcopy(net);
         
         #Training
@@ -209,8 +209,8 @@ def run_crossval(p):
             
             auc_i=sklearn.metrics.roc_auc_score(gt.numpy(),scores.numpy());
             loss_i=float(F.binary_cross_entropy_with_logits(scores,gt.float()));
-            if best_loss<auc_i:
-                best_loss=auc_i;
+            if best_loss>=loss_i:
+                best_loss=loss_i;
                 best_net=copy.deepcopy(net);
             
             #print('train %.4f, loss %.4f, auc %.4f'%(float(loss_total),float(loss_i),float(auc_i)))

@@ -201,13 +201,13 @@ class FasterRCNN(torchvision.models.detection.generalized_rcnn.GeneralizedRCNN):
         if isinstance(features, torch.Tensor):
             features = OrderedDict([("0", features)])
         proposals, proposal_losses = self.rpn(images, features, targets)
-        detections, detector_losses = self.roi_heads(features, proposals, images.image_sizes, targets)
+        detections, detector_losses,scores = self.roi_heads(features, proposals, images.image_sizes, targets)
 
         losses = {}
         losses.update(detector_losses)
         losses.update(proposal_losses)
 
-        return losses, detections
+        return losses, detections,scores
 
     def forward(self, images, targets=None):
         # type: (List[Tensor], Optional[List[Dict[str, Tensor]]]) -> Tuple[Dict[str, Tensor], List[Dict[str, Tensor]]]
@@ -225,13 +225,13 @@ class FasterRCNN(torchvision.models.detection.generalized_rcnn.GeneralizedRCNN):
         """
         images, targets, original_image_sizes = self.prepare_inputs(images, targets)
 
-        losses, detections = self.basic_forward(images, targets)
+        losses, detections,scores = self.basic_forward(images, targets)
         detections = self.transform.postprocess(detections, images.image_sizes, original_image_sizes)  # type: ignore[operator]
 
         if targets is None:
             return detections
         else:
-            return losses, detections
+            return losses, detections,scores
 
 
 class RoIHeads(torchvision.models.detection.roi_heads.RoIHeads):
@@ -372,7 +372,7 @@ class RoIHeads(torchvision.models.detection.roi_heads.RoIHeads):
 
             losses.update(loss_keypoint)
 
-        return result, losses
+        return result, losses, class_logits
 
 
 class RegionProposalNetwork(torchvision.models.detection.rpn.RegionProposalNetwork):
@@ -530,6 +530,7 @@ class SSD(torchvision.models.detection.SSD):
 
         # compute the ssd heads outputs using the features
         head_outputs = self.head(features)
+        #torch.save(head_outputs,'debug.pt')
 
         # create the set of anchors
         anchors = self.anchor_generator(images, features)
@@ -551,7 +552,7 @@ class SSD(torchvision.models.detection.SSD):
 
         detections = self.postprocess_detections(head_outputs, anchors, images.image_sizes)
 
-        return loss_dict, detections
+        return loss_dict, detections,head_outputs['cls_logits'].squeeze(0);
 
     def forward(self, images: List[torch.Tensor], targets: Optional[List[Dict[str, torch.Tensor]]] = None) -> Tuple[Dict[str, torch.Tensor], List[Dict[str, torch.Tensor]]]:
         if self.training and targets is None:
@@ -559,13 +560,13 @@ class SSD(torchvision.models.detection.SSD):
 
         images, targets, original_image_sizes = self.prepare_inputs(images, targets)
 
-        losses, detections = self.basic_forward(images, targets)
+        losses, detections,scores = self.basic_forward(images, targets)
         detections = self.transform.postprocess(detections, images.image_sizes, original_image_sizes)
 
         if targets is None:
             return detections
         else:
-            return losses, detections
+            return losses, detections,scores
 
 
 

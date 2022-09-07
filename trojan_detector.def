@@ -7,6 +7,8 @@ From: pytorch/pytorch:1.11.0-cuda11.3-cudnn8-runtime
     ./learned_parameters /
     ./*.py /
 	./*.json /
+	./sample_images /
+	./sample_images_1k /
 
 %post
     apt update
@@ -20,6 +22,7 @@ From: pytorch/pytorch:1.11.0-cuda11.3-cudnn8-runtime
     /opt/conda/bin/pip install jsonargparse
     /opt/conda/bin/pip install jsonpickle
     /opt/conda/bin/pip install jsonschema
+    /opt/conda/bin/pip install matplotlib==3.5.2
     /opt/conda/bin/pip install pycocotools
     /opt/conda/bin/pip install transformers==4.10.3
     /opt/conda/bin/pip install opencv-python

@@ -68,9 +68,17 @@ def example_trojan_detector(model_filepath,
     logging.info("Using compute device: {}".format(device))
     
     logging.info('Extracting features')
+    '''
     import analyzer_weight as feature_extractor
     fv=feature_extractor.extract_fv(model_filepath=model_filepath, scratch_dirpath=scratch_dirpath, examples_dirpath=examples_dirpath, params=config);
     fvs={'fvs':[fv]};
+    '''
+    
+    import trigger_search as feature_extractor
+    fv=feature_extractor.extract_fv(model_filepath=model_filepath, scratch_dirpath=scratch_dirpath, examples_dirpath=examples_dirpath, params=config);
+    fv=feature_extractor.pool3(fv);
+    fvs={'fvs':fv.unsqueeze(dim=0)};
+    #torch.save(fvs,'debug.pt')
     
     import importlib
     import pandas
@@ -85,6 +93,8 @@ def example_trojan_detector(model_filepath,
         #Compute ensemble score 
         scores=[];
         for i in range(len(checkpoint)):
+            if not i==3:
+                pass;
             params_=checkpoint[i]['params'];
             arch_=importlib.import_module(params_.arch);
             net=arch_.new(params_);

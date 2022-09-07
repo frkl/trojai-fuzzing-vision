@@ -2,6 +2,7 @@
 import cv2
 import os
 import numpy as np
+import random
 import json
 import copy
 import torch
@@ -50,11 +51,13 @@ class new:
     def load_examples(self,examples_dirpath,scratch_dirpath='',bsz=12,shuffle=False):
         fns=[os.path.join(examples_dirpath, fn) for fn in os.listdir(examples_dirpath) if fn.endswith('.jpg')]
         fns.sort()
+        if shuffle:
+            fns=random.shuffle(fns);
         
         images=[];
         image_paths=[];
         targets=[];
-        annotations=[];
+        anns=[];
         
         for fn in fns[:bsz]:
             image_id = os.path.basename(fn)
@@ -82,9 +85,9 @@ class new:
                 image_paths.append(fn);
                 images.append(image)  # wrap into list
                 targets.append(target)
-                annotations.append(annotations)
+                anns.append(annotations)
         
-        return db.Table({'imname':image_paths,'im':images,'target':targets,'annotation':annotations});
+        return db.Table({'imname':image_paths,'im':images,'target':targets,'annotation':anns});
     
     #bbox: xywh,relative position to border
     def insert_trigger(self,examples,trigger,bbox,eps=1e-8):
@@ -120,8 +123,9 @@ class new:
         with torch.no_grad():
             outputs=[];
             for i in range(len(examples['im'])):
-                loss,pred=self.model([examples['im'][i].cuda()],[{k: v.cuda() for k, v in examples['target'][i].items()}]);
-                outputs.append({'loss':loss,'pred':pred[0]});
+                loss,pred,scores=self.model([examples['im'][i].cuda()],[{k: v.cuda() for k, v in examples['target'][i].items()}]);
+                #print(scores.shape)
+                outputs.append({'loss':loss,'pred':pred[0],'logits':scores});
         
         return outputs
     
