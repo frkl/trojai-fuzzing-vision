@@ -1,6 +1,54 @@
 import os
 import os.path
 import sys
+import torch
+import json
+from collections import OrderedDict
+
+
+def create_session(params):
+    try:
+        session_dir=params.session_dir;
+    except:
+        session_dir=None;
+    
+    session=Session(session_dir=session_dir); #Create session
+    torch.save({'params':params},session.file('params.pt'));
+    pmvs=vars(params);
+    pmvs=dict([(k,pmvs[k]) for k in pmvs if not(k=='stuff')]);
+    print(pmvs);
+    f=open(session.file('params.json'),'w');
+    json.dump(pmvs,f); #Write a human-readable parameter json
+    f.close();
+    session.file('model','dummy');
+    return session;
+
+
+class loss_tracker:
+    def __init__(self):
+        self.loss=OrderedDict();
+        return;
+    
+    def add(self,**kwargs):
+        for k in kwargs:
+            if not k in self.loss:
+                self.loss[k]=[];
+            self.loss[k].append(float(kwargs[k]));
+    
+    def mean(self):
+        data={};
+        for k in self.loss:
+            data[k]=sum(self.loss[k])/len(self.loss[k]);
+        
+        return data;
+    
+    def str(self,format='%.3f'):
+        s='';
+        for k in self.loss:
+            s=s+k+': '+format%(sum(self.loss[k])/len(self.loss[k]));
+            s=s+', '
+        
+        return s;
 
 class Session:
 	id=-1;

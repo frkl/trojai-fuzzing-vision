@@ -35,45 +35,70 @@ class MLP(nn.Module):
             h=F.relu(h);
             #h=F.dropout(h,training=self.training);
         
-        h=self.layers[-1](h);
+        h=self.layers[-1](h).view(*(list(x.shape[:-1])+[-1]));
         return h
 
+
+
+
+
+class encoder(nn.Module):
+    def __init__(self,ninput,nh,nlayers):
+        super().__init__()
+        self.layers=nn.ModuleList();
+        for i in range(nlayers):
+            if i==0:
+                self.layers.append(nn.Conv2d(ninput,nh,5,padding=2));
+            else:
+                self.layers.append(nn.Conv2d(nh,nh,5,padding=2));
+        
+    
+    
+    def forward(self,x):
+        h=x;
+        for i,layer in enumerate(self.layers):
+            if i>0:
+                h=F.relu(h);
+                h=h+layer(h)
+            else:
+                h=layer(h)
+        
+        h=h.mean(dim=-1).mean(dim=-1);
+        return h
 
 class new(nn.Module):
     def __init__(self,params):
         super(new,self).__init__()
+        
+        
         nh=params.nh;
         nh2=params.nh2;
+        nh3=params.nh3;
         nlayers=params.nlayers
         nlayers2=params.nlayers2
+        nlayers3=params.nlayers3
+        self.margin=params.margin
         
-        try:
-            self.margin=params.margin
-        except:
-            self.margin=8;
+        self.encoder1=MLP(2400,nh,nh2,nlayers);
+        #self.encoder1=MLP(2400,512,512,4);
+        #self.encoder2=MLP(nh,nh2,nh2,nlayers2);
+        self.encoder3=MLP(nh2,nh3,2,nlayers2);
+        #self.encoder3=MLP(512,512,2,4);
         
-        bins=100
-        self.encoder_hist=MLP(bins*6,nh,nh,nlayers);
-        self.encoder_combined=MLP(3*nh,nh2,2,nlayers2);
         self.w=nn.Parameter(torch.Tensor(1).fill_(1));
         self.b=nn.Parameter(torch.Tensor(1).fill_(0));
+        
         return;
     
     def forward(self,data_batch):
-        weight_dist=data_batch['fvs'];
-        b=len(weight_dist);
-        
         h=[];
-        #Have to process one by one due to variable nim & nclasses
-        for i in range(b):
-            h_i=self.encoder_hist(data_batch['fvs'][i].cuda());
-            h1,_=h_i.max(dim=0);
-            h2,_=h_i.min(dim=0);
-            h3=h_i.mean(dim=0);
-            h.append(torch.cat((h1,h2,h3),dim=0));
-        
+        fvs=[fv.to(self.w.device) for fv in data_batch['fvs']];
+        fvs=[fv[:,-12:,:].contiguous().view(-1,2400) for fv in fvs];
+        fvs=[torch.log(fv.abs()*1e6+1)/10*torch.sign(fv) for fv in fvs];
+        h=[self.encoder1(fv).mean(dim=-2) for fv in fvs];
         h=torch.stack(h,dim=0);
-        h=self.encoder_combined(h);
+        h=self.encoder3(h);
+        
         h=torch.tanh(h)*self.margin;
         return h
     

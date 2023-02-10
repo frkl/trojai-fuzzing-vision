@@ -23,7 +23,11 @@ class Table:
                     raise ValueError('Tensor field %s not present in all rows'%k);
                 
                 v=[r[k] for r in rows];
-                v=torch.stack(v,dim=0);
+                try:
+                    v=torch.stack(v,dim=0);
+                except:
+                    pass;
+                
                 d[k]=v;
             else:
                 l=[];
@@ -88,17 +92,23 @@ class Table:
         for field in self.d:
             data=self.d[field];
             if not isinstance(data,list):
-                self.d[field]=data.cuda();
+                self.d[field]=data.cuda(non_blocking=True);
+            else:
+                if len(data)>0 and torch.is_tensor(data[0]):
+                    self.d[field]=[x.cuda(non_blocking=True) for x in data]
         
-        return;
+        return self;
     
     def cpu(self):
         for field in self.d:
             data=self.d[field];
             if not isinstance(data,list):
                 self.d[field]=data.cpu();
+            else:
+                if len(data)>0 and torch.is_tensor(data[0]):
+                    self.d[field]=[x.cpu() for x in data]
         
-        return;
+        return self;
     
     def fields(self):
         return list(self.d.keys());
@@ -421,13 +431,13 @@ class DB:
         for tbl in self.d:
             self.d[tbl].cuda();
         
-        return;
+        return self
     
     def cpu(self):
         for tbl in self.d:
             self.d[tbl].cpu();
         
-        return;
+        return self;
 
 class Dataloader:
     #The main interface is to connect to a DB

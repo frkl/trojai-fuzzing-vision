@@ -39,42 +39,62 @@ class MLP(nn.Module):
         return h
 
 
+
+
+
+class encoder(nn.Module):
+    def __init__(self,ninput,nh,nlayers):
+        super().__init__()
+        self.layers=nn.ModuleList();
+        for i in range(nlayers):
+            if i==0:
+                self.layers.append(nn.Conv2d(ninput,nh,3,padding=1));
+            else:
+                self.layers.append(nn.Conv2d(nh,nh,3,padding=1));
+        
+    
+    
+    def forward(self,x):
+        h=x;
+        for i,layer in enumerate(self.layers):
+            if i>0:
+                h=F.relu(h);
+                h=h+layer(h)
+            else:
+                h=layer(h)
+        
+        h=h.mean(dim=-1).mean(dim=-1);
+        return h
+
 class new(nn.Module):
     def __init__(self,params):
         super(new,self).__init__()
+        
+        
         nh=params.nh;
         nh2=params.nh2;
+        nh3=params.nh3;
         nlayers=params.nlayers
         nlayers2=params.nlayers2
+        nlayers3=params.nlayers3
         
-        try:
-            self.margin=params.margin
-        except:
-            self.margin=8;
+        self.encoder1=encoder(300,nh,nlayers);
+        self.encoder2=MLP(nh,nh2,2,nlayers2);
         
-        bins=100
-        self.encoder_hist=MLP(bins*6,nh,nh,nlayers);
-        self.encoder_combined=MLP(3*nh,nh2,2,nlayers2);
         self.w=nn.Parameter(torch.Tensor(1).fill_(1));
         self.b=nn.Parameter(torch.Tensor(1).fill_(0));
+        
         return;
     
     def forward(self,data_batch):
-        weight_dist=data_batch['fvs'];
-        b=len(weight_dist);
-        
         h=[];
-        #Have to process one by one due to variable nim & nclasses
-        for i in range(b):
-            h_i=self.encoder_hist(data_batch['fvs'][i].cuda());
-            h1,_=h_i.max(dim=0);
-            h2,_=h_i.min(dim=0);
-            h3=h_i.mean(dim=0);
-            h.append(torch.cat((h1,h2,h3),dim=0));
+        fvs=data_batch['fvs'].to(self.w.device);
+        batch,C,T,_,_=fvs.shape
+        fvs=fvs.view(batch,C,T,300).permute(0,3,1,2);
+        h=self.encoder1(fvs)
+        h=self.encoder2(h);
         
-        h=torch.stack(h,dim=0);
-        h=self.encoder_combined(h);
-        h=torch.tanh(h)*self.margin;
+        h=torch.tanh(h)*8;
         return h
     
     def logp(self,data_batch):

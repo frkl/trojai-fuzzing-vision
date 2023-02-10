@@ -43,9 +43,13 @@ class new(nn.Module):
     def __init__(self,params):
         super(new,self).__init__()
         nh=params.nh;
-        nh2=params.nh2;
+        nh3=params.nh3;
         nlayers=params.nlayers
         nlayers2=params.nlayers2
+        
+        q=int((params.nh2//2)**0.5);
+        self.q=torch.arange(0,1+1e-8,1/q).cuda()
+        q=len(self.q);
         
         try:
             self.margin=params.margin
@@ -53,8 +57,8 @@ class new(nn.Module):
             self.margin=8;
         
         bins=100
-        self.encoder_hist=MLP(bins*6,nh,nh,nlayers);
-        self.encoder_combined=MLP(3*nh,nh2,2,nlayers2);
+        self.encoder_hist=MLP(bins*12,nh,nh,nlayers);
+        self.encoder_combined=MLP(q*nh,nh3,2,nlayers2);
         self.w=nn.Parameter(torch.Tensor(1).fill_(1));
         self.b=nn.Parameter(torch.Tensor(1).fill_(0));
         return;
@@ -66,11 +70,9 @@ class new(nn.Module):
         h=[];
         #Have to process one by one due to variable nim & nclasses
         for i in range(b):
-            h_i=self.encoder_hist(data_batch['fvs'][i].cuda());
-            h1,_=h_i.max(dim=0);
-            h2,_=h_i.min(dim=0);
-            h3=h_i.mean(dim=0);
-            h.append(torch.cat((h1,h2,h3),dim=0));
+            h_i=self.encoder_hist(weight_dist[i].cuda());
+            h_i=torch.quantile(h_i,self.q,dim=0).contiguous().view(-1);
+            h.append(h_i);
         
         h=torch.stack(h,dim=0);
         h=self.encoder_combined(h);
