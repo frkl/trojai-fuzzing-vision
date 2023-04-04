@@ -109,6 +109,13 @@ def parse(default=None,argv=None):
     if argv is None:
         argv=sys.argv;
     
+    tmp=[];
+    for x in argv:
+        tmp+=x.split('=')
+    
+    #print(tmp)
+    argv=tmp
+    
     d=[];
     k=None;
     for v in argv:

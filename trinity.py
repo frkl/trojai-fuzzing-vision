@@ -9,7 +9,7 @@ import copy
 import torch
 import util.db as db
 import util.smartparse as smartparse
-import helper_r11_v2 as helper
+import helper_r13 as helper
 
 
 #Interface spec
@@ -60,7 +60,7 @@ def characterize(interface,data=None,params=None):
     if data is None:
         data=interface.load_examples()
     
-    fvs=[grad2fv(compute_grad(interface,data[i]),params) for i in range(len(data))]
+    fvs=[grad2fv(interface.eval_grad(data[i]),params) for i in range(len(data))]
     fvs=torch.stack(fvs,dim=0);
     print(fvs.shape)
     return {'fvs':fvs}
@@ -83,14 +83,12 @@ def extract_dataset(models_dirpath,ts_engine,params=None):
     t0=time.time()
     models=os.listdir(models_dirpath);
     models=sorted(models)
-    
     models=[(i,x) for i,x in enumerate(models)]
     
     
     dataset=[];
     for i,fname in models[params.rank::params.world_size]:
         folder=os.path.join(models_dirpath,fname);
-        
         interface=helper.engine(folder=folder,params=params)
         fvs=extract_fv(interface,ts_engine,params=params);
         
@@ -142,6 +140,7 @@ def generate_probe_set(models_dirpath,params=None):
 
 def ts_engine(interface,additional_data='enum.pt',params=None):
     data=interface.load_examples()
+    '''
     labels=set(data['label'])
     print(labels)
     new_data=[];
@@ -152,7 +151,7 @@ def ts_engine(interface,additional_data='enum.pt',params=None):
             new_data.append(d);
     
     data=db.Table.from_rows(new_data)
-    
+    '''
     return data
 
 
@@ -180,7 +179,7 @@ def predict(ensemble,fvs):
 if __name__ == "__main__":
     import os
     default_params=smartparse.obj();
-    default_params.out='data_r11_trinity_v0'
+    default_params.out='data_r13_trinity_v0'
     params=smartparse.parse(default_params);
     params.argv=sys.argv;
     

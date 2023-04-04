@@ -100,9 +100,9 @@ def train(crossval_splits,params):
     nets=[];
     for split_id,split in enumerate(crossval_splits):
         data_train,data_val,data_test=split;
-        loader_train = DataLoader(Dataset(data_train),collate_fn=collate,batch_size=params.batch,shuffle=True,drop_last=True,num_workers=0);
+        loader_train = DataLoader(Dataset(data_train.cuda()),collate_fn=collate,batch_size=params.batch,shuffle=True,drop_last=True,num_workers=0);
         net=arch.new(params).cuda();
-        opt=optim.Adam(net.parameters(),lr=params.lr);
+        opt=optim.AdamW(net.parameters(),lr=params.lr,weight_decay=params.decay);
         
         for iter in range(params.epochs):
             net.train();
@@ -112,18 +112,20 @@ def train(crossval_splits,params):
                 C=torch.LongTensor(data_batch['label']).cuda();
                 
                 #Cross entropy
-                #scores_i=net.logp(data_batch)
-                #loss=F.binary_cross_entropy_with_logits(scores_i,C.float());
+                scores_i=net.logp(data_batch)
+                loss=F.binary_cross_entropy_with_logits(scores_i,C.float());
                 
                 #Mutual information
+                '''
                 scores_i=net(data_batch);
                 spos=scores_i.gather(1,C.view(-1,1)).mean();
                 sneg=torch.exp(scores_i).mean();
                 loss=-(spos-sneg+1);
+                '''
                 
                 #L1-L2 
-                l2=torch.stack([(p**2).sum() for p in net.parameters()],dim=0).sum()
-                loss=loss+l2*params.decay;
+                #l2=torch.stack([(p**2).sum() for p in net.parameters()],dim=0).sum()
+                #loss=loss+l2*params.decay;
                 
                 loss.backward();
                 opt.step();
@@ -138,7 +140,7 @@ def train(crossval_splits,params):
         data_train,data_val,data_test=split;
         net=nets[split_id];
         net.eval();
-        loader_val = DataLoader(Dataset(data_val),collate_fn=collate,batch_size=params.batch,num_workers=0);
+        loader_val = DataLoader(Dataset(data_val.cuda()),collate_fn=collate,batch_size=params.batch,num_workers=0);
         with torch.no_grad():
             for data_batch in loader_val:
                 data_batch.cuda();
@@ -168,7 +170,7 @@ def train(crossval_splits,params):
         data_train,data_val,data_test=split;
         net=nets[split_id];
         net.eval();
-        loader_test = DataLoader(Dataset(data_test),collate_fn=collate,batch_size=params.batch,num_workers=0);
+        loader_test = DataLoader(Dataset(data_test.cuda()),collate_fn=collate,batch_size=params.batch,num_workers=0);
         with torch.no_grad():
             for data_batch in loader_test:
                 data_batch.cuda();
@@ -245,7 +247,7 @@ def crossval_hyper(dataset,params):
     
     hp_config.add('qloguniform','epochs',low=3,high=300);
     hp_config.add('loguniform','lr',low=1e-5,high=1e-2);
-    hp_config.add('loguniform','decay',low=1e-8,high=1e-3);
+    hp_config.add('loguniform','decay',low=1e-5,high=1e1);
     hp_config.add('qloguniform','batch',low=8,high=64);
     
     #HP search function
@@ -275,14 +277,46 @@ def crossval_hyper(dataset,params):
 
 
 if __name__ == "__main__":
+    import util.perm_inv as inv
+    comps=[];
+    for i in range(1,6):
+        comps+=inv.generate_comps(i)
+    
+    inv_net1=inv.perm_inv2(comps,w=300,h=200)
+    
+    class vector_log(torch.autograd.Function):
+        @staticmethod
+        def forward(ctx, x):
+            ctx.save_for_backward(x)
+            return x.sign()*torch.log1p(x.abs())/10
+        
+        @staticmethod
+        def backward(ctx, grad_output):
+            x=ctx.saved_tensors
+            return grad_output/(1+x.abs())/10
+    
+    vector_log = vector_log.apply
+
     import os
     default_params=smartparse.obj();
-    default_params.data='data_r11_trinity_v0'
+    default_params.data='data_r13_trinity_v0'
     params=smartparse.parse(default_params);
     params.argv=sys.argv;
     
-    dataset=[torch.load(os.path.join(params.data,fname)) for fname in os.listdir(params.data) if fname.endswith('.pt')];
-    dataset=db.Table.from_rows(dataset)
+    if params.data.endswith('.pt'):
+        dataset=db.DB.load(params.data)
+        dataset=dataset['table_ann']
+    else:
+        dataset=[torch.load(os.path.join(params.data,fname)) for fname in os.listdir(params.data) if fname.endswith('.pt')];
+        dataset=db.Table.from_rows(dataset)
+    
+    with torch.no_grad():
+        for i in range(len(dataset['fvs'])):
+            fv=dataset['fvs'][i].cuda()
+            #fv=vector_log(fv*1e3)
+            fv=inv_net1(fv.permute(1,0,2))
+            dataset['fvs'][i]=fv.cpu()
+    
     crossval_hyper(dataset,params)
     
 

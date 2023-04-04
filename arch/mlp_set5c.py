@@ -8,6 +8,7 @@ import math
 from collections import OrderedDict as OrderedDict
 import copy
 
+
 class MLP(nn.Module):
     def __init__(self,ninput,nh,noutput,nlayers):
         super().__init__()
@@ -66,6 +67,19 @@ class encoder(nn.Module):
         h=h.mean(dim=-1).mean(dim=-1);
         return h
 
+class vector_log(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x):
+        ctx.save_for_backward(x)
+        return x.sign()*torch.log1p(x.abs())/10
+    
+    @staticmethod
+    def backward(ctx, grad_output):
+        x=ctx.saved_tensors
+        return grad_output/(1+x.abs())/10
+
+vector_log = vector_log.apply
+
 class new(nn.Module):
     def __init__(self,params):
         super(new,self).__init__()
@@ -79,7 +93,8 @@ class new(nn.Module):
         nlayers3=params.nlayers3
         self.margin=params.margin
         
-        self.encoder1=MLP(2400,nh,nh2,nlayers);
+        #self.encoder1=MLP(200*12,nh,nh2,nlayers)
+        self.encoder1=MLP(67,nh,nh2,nlayers);
         #self.encoder1=MLP(2400,512,512,4);
         #self.encoder2=MLP(nh,nh2,nh2,nlayers2);
         self.encoder3=MLP(nh2,nh3,2,nlayers2);
@@ -92,10 +107,13 @@ class new(nn.Module):
     
     def forward(self,data_batch):
         h=[];
-        fvs=[fv.to(self.w.device) for fv in data_batch['fvs']];
-        fvs=[fv[:,-12:,:].contiguous().view(-1,2400) for fv in fvs];
-        fvs=[torch.log(fv.abs()*1e6+1)/10*torch.sign(fv) for fv in fvs];
-        h=[self.encoder1(fv).mean(dim=-2) for fv in fvs];
+        with torch.no_grad():
+            fvs=[fv.to(self.w.device) for fv in data_batch['fvs']];
+            #fvs=[vector_log(fv*1e3) for fv in fvs]
+            #fvs=[inv_net1(fv.permute(1,0,2)) for fv in fvs]
+        
+        #print([fv.shape for fv in fvs])
+        h=[self.encoder1(fv.view(fv.shape[0],-1)).mean(dim=-2) for fv in fvs];
         h=torch.stack(h,dim=0);
         h=self.encoder3(h);
         
