@@ -518,6 +518,32 @@ def generate_comps_n(n=5,k=3):
     return comps_
 
 
+if __name__ == "__main__":
+    order=3 #1-7 possible
+    w=300
+    h=100
+    print('Generating networks for computing invariant coefficients up to order %d'%order)
+    comps=[];
+    for i in range(1,order+1): #Up t
+        comps+=generate_comps(i)
+    
+    inv_net1=perm_inv2(comps,w=w,h=h)
+    
+    print('Extracting permutation invariant features')
+    x=torch.rand(5,h,w)
+    x=x-x.mean()
+    y=x[:,torch.randperm(h),:]
+    y=y[:,:,torch.randperm(w)].contiguous()
+    
+    fvs_x=inv_net1(x.cuda())
+    fvs_y=inv_net1(y.cuda())
+    print('features for original matrix')
+    print(fvs_x)
+    print('features for doubly shuffled matrix')
+    print(fvs_y)
+    print('delta')
+    print(fvs_x-fvs_y)
+
 
 '''
 
