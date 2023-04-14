@@ -8,6 +8,7 @@ from torch.nn.utils.weight_norm import WeightNorm
 import math
 from collections import OrderedDict as OrderedDict
 import copy
+import segmentation_models_pytorch as smp
 
 from torch.distributions import Normal
 def gaussian_kernel_1d(sigma: float, num_sigmas: float = 2.) -> torch.Tensor:
@@ -51,7 +52,7 @@ def apply(x,I):
     patch=torch.sigmoid(x[:,4:,:,:])
     
     scale=max(h,w)/min(H,W)
-    sz=torch.exp(-sz+torch.Tensor(1).uniform_(-0.3,0.3).to(sz.device))#/scale
+    sz=torch.exp(-sz+torch.Tensor(1).uniform_(-0.1,0.1).to(sz.device))#/scale
     offset=(offset)*sz
     t=torch.stack([sz,sz*0,offset[0:1],sz*0,sz,offset[1:2]],dim=0).view(1,2,3);
     
@@ -93,6 +94,16 @@ class conv(nn.Module):
             #nn.Conv2d(nh,nh,k,padding=k//2),
             #nn.ReLU(),
             nn.Conv2d(nh,c+4,k,padding=k//2));
+    
+    def forward(self):
+        return trigger(self.decoder(self.h))
+
+#k odd
+class conv_smp(nn.Module):
+    def __init__(self,c=3,h=64,w=64,nh=32):
+        super().__init__()
+        self.h=nn.Parameter(torch.Tensor(1,nh,h,w).uniform_(-0.1,0.1));
+        self.decoder=smp.Unet(encoder_name="resnet50",encoder_weights="imagenet",in_channels=nh,classes=4+c)
     
     def forward(self):
         return trigger(self.decoder(self.h))

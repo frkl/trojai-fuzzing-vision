@@ -93,8 +93,8 @@ class new(nn.Module):
         nlayers3=params.nlayers3
         self.margin=params.margin
         
-        #self.encoder1=MLP(200*12,nh,nh2,nlayers)
-        self.encoder1=MLP(67,nh,nh2,nlayers);
+        self.encoder1=MLP(200*12,nh,nh2,nlayers)
+        #self.encoder1=MLP(67,nh,nh2,nlayers);
         #self.encoder1=MLP(2400,512,512,4);
         #self.encoder2=MLP(nh,nh2,nh2,nlayers2);
         self.encoder3=MLP(nh2,nh3,2,nlayers2);
@@ -109,7 +109,7 @@ class new(nn.Module):
         h=[];
         with torch.no_grad():
             fvs=[fv.to(self.w.device) for fv in data_batch['fvs']];
-            fvs=[vector_log(fv) for fv in fvs]
+            fvs=[fv[:,-12:,:].contiguous().view(-1,2400) for fv in fvs]
             #fvs=[inv_net1(fv.permute(1,0,2)) for fv in fvs]
         
         #print([fv.shape for fv in fvs])

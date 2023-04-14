@@ -65,7 +65,7 @@ class diversity_grad:
     
     def compute_grad(self,interface,im,gt):
         loss=interface.eval_loss({'image':im,'gt':gt})
-        g=grad(loss,list(interface.model.parameters()),create_graph=True, allow_unused=True);
+        g=grad(loss,list(interface.parameters()),create_graph=True, allow_unused=True);
         g=[x.contiguous().view(-1) for x in g if not x is None]
         g=torch.cat(g,dim=0);
         return g
@@ -110,9 +110,9 @@ def run(model,example,params=None):
     default_params.opt='conv';
     default_params.div='diversity_embed';
     default_params.load='';
-    default_params.round=10;
-    default_params.iter=500;
-    default_params.lr=1e-3;
+    default_params.round=5;
+    default_params.iter=50;
+    default_params.lr=1e-1;
     
     params=smartparse.merge(params,default_params)
     
@@ -159,11 +159,12 @@ def run(model,example,params=None):
             if loss_total<best:
                 best=loss_total
                 best_trigger=x.detach().clone()
-            
+            '''
             if i%100==0 or i==niter:
                 print('iter %d-%d, %s, time %.2f'%(r,i,tracker.str(),time.time()-t0))
             #    im=arch.apply(x,example)
             #    torchvision.utils.save_image(im,session.file('vis','iter%02d_%05d.png'%(r,i)))
+            '''
             
         loss_total,tracker=eval_trigger(best_trigger)
         print('iter %d best, %s'%(r,tracker.str()))
@@ -176,16 +177,16 @@ def run(model,example,params=None):
     
     return triggers
     
-def run_color(model,example,params=None):
+def run_color(model,data,params=None):
     default_params=smartparse.obj();
     default_params.session_dir=None;
     default_params.arch='arch.meta_color7';
     default_params.opt='direct';
-    default_params.div='diversity_embed';
+    default_params.div='diversity_grad';
     default_params.load='';
-    default_params.round=10;
-    default_params.iter=500;
-    default_params.lr=1e-2;
+    default_params.round=3;
+    default_params.iter=30;
+    default_params.lr=3e-2;
     
     params=smartparse.merge(params,default_params)
     
@@ -197,22 +198,35 @@ def run_color(model,example,params=None):
     niter=params.iter
     t0=time.time();
     
+    example=data['image'].cuda();
+    imname=data['fname']
+    gt=data['gt'];
+    
     triggers=[];
     for r in range(params.round):
         #Learn trigger generator
         global arch
         arch=importlib.import_module(params.arch)
         trigger_gen=getattr(arch,params.opt)().cuda()
-        opt=optim.Adam(trigger_gen.parameters(),lr=params.lr,betas=(0.5,0.7));
+        opt=optim.Adam(trigger_gen.parameters(),lr=params.lr,betas=(0.7,0.9));
         best=1e10
         best_trigger=None
+        with torch.no_grad():
+            loss0=get_loss_label_(model,example,gt)
+            loss0=float(loss0)
+            print('loss0',loss0)
+        
         
         def eval_trigger(x):
             tracker=loss_tracker()
-            loss_label=get_loss_label(x,model,example) #Should not be more than 0.1
-            similarity=diversity.loss(x,model,example,previous_grads) #Minimizes this. range -1~1
-            loss_total= 2* sx2(similarity)  + 1 *loss_label**2
-            tracker.add(loss_label=loss_label,loss_total=loss_total,similarity=similarity,best=best)
+            #loss_sz=get_loss_sz(x,target_sz_i) #Should not be off by more than 0.1
+            loss_label=get_loss_label(x,model,example,gt) #Should not be more than 0.1
+            loss_label=(loss_label-loss0)
+            loss_label=F.sigmoid(-loss_label)*5
+            
+            similarity=diversity.loss(x,model,example,gt,previous_grads) #Minimizes this. range -1~1
+            loss_total= 2* sx2(similarity) + 1 *loss_label**2 #+  1 * loss_sz**2
+            tracker.add(loss_label=loss_label,loss_total=loss_total,similarity=similarity,best=best)#,loss_sz=loss_sz
             return loss_total,tracker
         
         for i in range(niter+1):
@@ -232,17 +246,19 @@ def run_color(model,example,params=None):
                 best=loss_total
                 best_trigger=x.detach().clone()
             
+            '''
             if i%100==0 or i==niter:
                 print('iter %d-%d, %s, time %.2f'%(r,i,tracker.str(),time.time()-t0))
             #    im=arch.apply(x,example)
             #    torchvision.utils.save_image(im,session.file('vis','iter%02d_%05d.png'%(r,i)))
+            '''
             
         loss_total,tracker=eval_trigger(best_trigger)
         print('iter %d best, %s'%(r,tracker.str()))
         
         #im=arch.apply(best_trigger,example)
         #torchvision.utils.save_image(im,session.file('vis','iter%02d_best.png'%(r)))
-        g=diversity.util(best_trigger,model,example).data
+        g=diversity.util(best_trigger,model,example,gt).data.clone()
         previous_grads.append(g)
         triggers.append(best_trigger)
     
@@ -254,8 +270,8 @@ def run_color(model,example,params=None):
 if __name__ == "__main__":
     default_params=smartparse.obj();
     default_params.session_dir=None;
-    default_params.arch='arch.meta_poly7';
-    default_params.opt='conv_hie';
+    default_params.arch='arch.meta_color7';
+    default_params.opt='direct';
     default_params.div='diversity_grad';
     default_params.load='';
     default_params.round=90;
@@ -299,23 +315,25 @@ if __name__ == "__main__":
         #Learn trigger generator
         arch=importlib.import_module(params.arch)
         trigger_gen=getattr(arch,params.opt)().cuda()
-        opt=optim.Adam(trigger_gen.parameters(),lr=params.lr,betas=(0.5,0.7));
+        opt=optim.Adam(trigger_gen.parameters(),lr=params.lr,betas=(0.7,0.9));
         best=1e10
         best_trigger=None
         with torch.no_grad():
             loss0=get_loss_label_(model,example,gt)
-            print('loss0',float(loss0))
+            loss0=float(loss0)
+            print('loss0',loss0)
         
         def eval_trigger(x):
             tracker=loss_tracker()
-            loss_sz=get_loss_sz(x,target_sz_i) #Should not be off by more than 0.1
+            #loss_sz=get_loss_sz(x,target_sz_i) #Should not be off by more than 0.1
             loss_label=get_loss_label(x,model,example,gt) #Should not be more than 0.1
+            #print(loss_label)
             loss_label=(loss_label-loss0)
             loss_label=F.sigmoid(-loss_label)*5
             
             similarity=diversity.loss(x,model,example,gt,previous_grads) #Minimizes this. range -1~1
-            loss_total= 2* sx2(similarity) + 1 *loss_label**2 + 1 * loss_sz**2
-            tracker.add(loss_label=loss_label,loss_total=loss_total,loss_sz=loss_sz,similarity=similarity,best=best)
+            loss_total= 2* sx2(similarity) + 1 *loss_label**2 #+  1 * loss_sz**2
+            tracker.add(loss_label=loss_label,loss_total=loss_total,similarity=similarity,best=best)#,loss_sz=loss_sz
             return loss_total,tracker
         
         for i in range(niter+1):
@@ -335,7 +353,7 @@ if __name__ == "__main__":
                 best=loss_total
                 best_trigger=x.detach().clone()
             
-            if i%100==0 or i==niter:
+            if i%10==0 or i==niter:
                 session.log('iter %d-%d, %s, time %.2f'%(r,i,tracker.str(),time.time()-t0))
                 im=best_trigger.apply(example)
                 with torch.no_grad():
@@ -354,7 +372,7 @@ if __name__ == "__main__":
             print(loss)
         
         torchvision.utils.save_image(im,session.file('vis','iter%02d_best.png'%(r)))
-        data=model.eval({'image':im})
+        data=model.eval({'image':im,'gt':gt})
         helper.visualize(session.file('vis','iter%02d_best.png'%(r)),data,session.file('vis_ann','iter%02d_best.png'%(r)))
         g=diversity.util(best_trigger,model,example,gt).data.clone()
         previous_grads.append(g)

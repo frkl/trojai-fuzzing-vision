@@ -8,7 +8,7 @@ from torch.nn.utils.weight_norm import WeightNorm
 import math
 from collections import OrderedDict as OrderedDict
 import copy
-import segmentation_models_pytorch as smp
+#import segmentation_models_pytorch as smp
 
 from torch.distributions import Normal
 def gaussian_kernel_1d(sigma: float, num_sigmas: float = 2.) -> torch.Tensor:

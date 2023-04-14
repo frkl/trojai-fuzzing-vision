@@ -48,7 +48,7 @@ def prepare_boxes(anns, image_id):
     
     target = {}
     target['boxes'] = torch.as_tensor(boxes)
-    target['labels'] = torch.as_tensor(class_ids).type(torch.int64)
+    target['labels'] = torch.as_tensor(class_ids).type(torch.int64)+1
     target['image_id'] = torch.as_tensor(image_id)
     return target
 
@@ -83,7 +83,7 @@ def prepare_boxes_detr(anns, image_id,imw,imh):
     
     target = {}
     target['boxes'] = torch.as_tensor(boxes).float()
-    target['class_labels'] = torch.as_tensor(class_ids).type(torch.int64)
+    target['class_labels'] = torch.as_tensor(class_ids).type(torch.int64)+1
     target['image_id'] = torch.as_tensor(image_id)
     return target
 
@@ -158,19 +158,28 @@ class engine:
         
         model, model_repr, model_class = load_model(params.model_filepath)
         self.model=model.cuda()
+        self.enable_loss()
+        
+        self.root=folder
+        self.model_filepath=params.model_filepath
+        self.examples_dirpath=params.examples_dirpath
+    
+    def enable_loss(self):
         self.model.train()
         #Turn off batch norm
         #But sets to training mode for loss & gradients
-        for module in self.model.modules():
-            module.eval()
-            #if isinstance(module, nn.BatchNorm2d):
-            #    module.eval()
+        for module in list(self.model.modules())[1:]:
+            #module.eval()
+            if not any([s in module.__class__.__name__ for s in ('RCNN')]): #,'RPN','RoI'
+                module.eval()
         
         for param in self.model.parameters():
             param.requires_grad_(True)
         
-        self.model_filepath=params.model_filepath
-        self.examples_dirpath=params.examples_dirpath
+        mc=list(set([module.__class__.__name__ for module in list(self.model.modules())[1:]]))
+        #print(mc)
+        return
+    
     
     #Load data into memory, for faster processing.
     def load_examples(self,examples_dirpath=None):
@@ -203,40 +212,41 @@ class engine:
         
         data=db.Table.from_rows(data)
         return data
+        
+    def load_poisoned_examples(self):
+        if os.path.exists(os.path.join(self.root,'poisoned-example-data')):
+            return self.load_examples(os.path.join(self.root,'poisoned-example-data'))
+        else:
+            return None
     
     def eval_grad(self, data):
-        im=data['image']
-        if 'DetrForObjectDetection' in self.model.__class__.__name__:
-            self.model.zero_grad()
-            loss = self.model(im.cuda(),labels=[{k: v.cuda() for k, v in prepare_boxes_detr(data['gt'],0,im.shape[-1],im.shape[-2]).items()}])
-            #print(loss['loss_dict'])
-            loss=loss['loss']
-            loss.backward()
-            loss=float(loss)
-            
-            g=[]
-            for w in self.model.parameters():
-                if w.grad is None:
-                    g.append((w*0).data.clone().cpu())
-                else:
-                    g.append(w.grad.data.clone().cpu())
-        else:
-            m=copy.deepcopy(self.model)
-            m=m.train()
-            m.zero_grad()
-            loss = m(im.cuda(),[{k: v.cuda() for k, v in prepare_boxes(data['gt'],0).items()}])
-            loss=torch.stack([loss[k] for k in loss],dim=0).sum()
-            loss.backward()
-            loss=float(loss)
-            
-            g=[]
-            for w in m.parameters():
-                if w.grad is None:
-                    g.append(None)
-                else:
-                    g.append(w.grad.data.clone().cpu())
+        loss=self.eval_loss(data);
+        self.model.zero_grad()
+        loss.backward()
+        
+        g=[]
+        for w in self.model.parameters():
+            if w.grad is None:
+                g.append((w*0).data.clone().cpu())
+            else:
+                g.append(w.grad.data.clone().cpu())
+        
         
         return g
+    
+    def parameters(self):
+        params=[];
+        names=[];
+        for name,param in self.model.named_parameters():
+            if any([s in name for s in ('backbone','fpn')]):
+                continue;
+            
+            names.append(name)
+            params.append(param)
+        
+        #print(names)
+        return params
+    
     
     def eval_loss(self, data):
         im=data['image']
@@ -250,27 +260,33 @@ class engine:
             
         else:
             loss = self.model(im.cuda(),[{k: v.cuda() for k, v in prepare_boxes(data['gt'],0).items()}])
+            #print(loss,im.shape,data['gt'])
+            #if 'RCNN' in  self.model.__class__.__name__:
+            #    loss.pop('loss_box_reg');
+            
             loss=torch.stack([loss[k] for k in loss],dim=0).sum()
         
         return loss
     
     def eval(self, data):
         im=data['image']
-        outputs=self.model(im.cuda())
-        if 'DetrObjectDetectionOutput' in outputs.__class__.__name__:
+        if 'DetrForObjectDetection' in self.model.__class__.__name__:
+            outputs=self.model(im.cuda())
             boxes = decode_boxes_detr(outputs.pred_boxes[0],im.shape[-1],im.shape[-2])
-            print(boxes.shape)
             logits = outputs.logits[0]
             probs = F.softmax(logits,dim=-1)[:,:-1]
             scores,labels=probs.max(dim=-1)
         else:
+            self.model.eval()
+            outputs=self.model(im.cuda())
             outputs=outputs[0]
             boxes = outputs['boxes']
             scores = outputs['scores']
             labels= outputs['labels']
+            self.enable_loss()
         
         #visualize(data['fname'],{'scores':scores,'labels':labels,'boxes':boxes},threshold=0.1)
-        return boxes,scores
+        return {'scores':scores,'labels':labels,'boxes':boxes}
     
     def eval_hidden(self,data):
         activation = {}

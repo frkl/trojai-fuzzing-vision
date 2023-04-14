@@ -350,10 +350,12 @@ class perm_inv2(nn.Module):
     def __init__(self,comps,w=1000,h=1000):
         super().__init__()
         self.nets=nn.ModuleList();
+        self.comps=comps
         
         mem=[]
         compute=[]
         einstrs=[]
+        
         for prefix,suffix in comps:
             path=einopt(prefix,suffix,w=w,h=h)
             mem_i=path[-2]/1e9
@@ -376,10 +378,14 @@ class perm_inv2(nn.Module):
     
     def forward(self,x,sz=None,device=None):
         sz_=list(x.shape)
+        w_=sz_[-1]
+        h_=sz_[-2]
         x=x.view(-1,sz_[-2],sz_[-1])
         hs=[];
         for i,net in enumerate(self.nets):
             n=len(net.comp[0])
+            nprefix=len(set(self.comps[i][0]))
+            nsuffix=len(set(self.comps[i][1]))
             ops=[x]*n
             if sz is None:
                 h=net(*ops)
@@ -389,7 +395,8 @@ class perm_inv2(nn.Module):
                 
                 h=torch.stack(h,dim=0).sum(dim=0)
                 #print('%s %d chunks'%(self.einstrs[i],len(ops_slices)),[list(op.shape) for op in ops_slices[0]],end='\r')
-                
+            
+            h=h/(h_**nprefix)/(w_**nsuffix)
             
             hs.append(h)
         
@@ -517,32 +524,6 @@ def generate_comps_n(n=5,k=3):
     print('%d final'%(len(comps_)))
     return comps_
 
-
-if __name__ == "__main__":
-    order=3 #1-7 possible
-    w=300
-    h=100
-    print('Generating networks for computing invariant coefficients up to order %d'%order)
-    comps=[];
-    for i in range(1,order+1): #Up t
-        comps+=generate_comps(i)
-    
-    inv_net1=perm_inv2(comps,w=w,h=h)
-    
-    print('Extracting permutation invariant features')
-    x=torch.rand(5,h,w)
-    x=x-x.mean()
-    y=x[:,torch.randperm(h),:]
-    y=y[:,:,torch.randperm(w)].contiguous()
-    
-    fvs_x=inv_net1(x.cuda())
-    fvs_y=inv_net1(y.cuda())
-    print('features for original matrix')
-    print(fvs_x)
-    print('features for doubly shuffled matrix')
-    print(fvs_y)
-    print('delta')
-    print(fvs_x-fvs_y)
 
 
 '''

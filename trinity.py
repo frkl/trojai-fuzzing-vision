@@ -9,7 +9,7 @@ import copy
 import torch
 import util.db as db
 import util.smartparse as smartparse
-import helper_r13 as helper
+import helper_r13_v2 as helper
 
 
 #Interface spec
@@ -138,20 +138,26 @@ def generate_probe_set(models_dirpath,params=None):
     return all_data
 
 
+
 def ts_engine(interface,additional_data='enum.pt',params=None):
+    import diversity_exp2 as trigger_search
     data=interface.load_examples()
-    '''
-    labels=set(data['label'])
-    print(labels)
+    
     new_data=[];
     for i in range(len(data)):
-        for j in labels:
+        im=data[i]['image']
+        
+        triggers2=trigger_search.run_color(interface,data[i]);
+        for trigger in triggers2:
+            import arch.meta_color7 as arch
+            im2=arch.apply(trigger,im.cuda())
             d=copy.deepcopy(data[i]);
-            d['label']=j;
+            d['image']=im2.data.cpu();
+            #d['trigger']=trigger.data.cpu()
             new_data.append(d);
     
-    data=db.Table.from_rows(new_data)
-    '''
+    data=db.Table.from_rows(list(data.rows())+new_data)
+    
     return data
 
 
@@ -179,7 +185,7 @@ def predict(ensemble,fvs):
 if __name__ == "__main__":
     import os
     default_params=smartparse.obj();
-    default_params.out='data_r13_trinity_v0'
+    default_params.out='data_r13_trinity_v1'
     params=smartparse.parse(default_params);
     params.argv=sys.argv;
     
