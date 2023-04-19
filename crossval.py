@@ -310,14 +310,13 @@ if __name__ == "__main__":
         dataset=[torch.load(os.path.join(params.data,fname)) for fname in os.listdir(params.data) if fname.endswith('.pt')];
         dataset=db.Table.from_rows(dataset)
     
-    '''
     with torch.no_grad():
         for i in range(len(dataset['fvs'])):
             fv=dataset['fvs'][i].cuda()
             #fv=vector_log(fv*1e3)
             fv=inv_net1(fv.permute(1,0,2))
             dataset['fvs'][i]=fv.cpu()
-    '''
+    
     
     crossval_hyper(dataset,params)
     

@@ -77,13 +77,21 @@ def extract_dataset(models_dirpath,ts_engine,params=None):
     default_params=smartparse.obj();
     default_params.rank=0
     default_params.world_size=1
+    default_params.repeats=1
     default_params.out=''
+    default_params.preextracted=False
+    
     params=smartparse.merge(params,default_params)
+    
+    if params.preextracted:
+        dataset=[torch.load(os.path.join('data_r13_trinity_v1',fname)) for fname in os.listdir(params.data) if fname.endswith('.pt')];
+        dataset=db.Table.from_rows(dataset)
+        return dataset
     
     t0=time.time()
     models=os.listdir(models_dirpath);
     models=sorted(models)
-    models=[(i,x) for i,x in enumerate(models)]
+    models=[(i,x) for i,x in enumerate(models)]*params.repeats
     
     
     dataset=[];
@@ -185,7 +193,7 @@ def predict(ensemble,fvs):
 if __name__ == "__main__":
     import os
     default_params=smartparse.obj();
-    default_params.out='data_r13_trinity_v1'
+    default_params.out='data_r13_trinity_v2'
     params=smartparse.parse(default_params);
     params.argv=sys.argv;
     

@@ -1,0 +1,32 @@
+Bootstrap: docker
+From: pytorch/pytorch:1.13.1-cuda11.6-cudnn8-runtime
+
+%files
+%files
+    ./detector.py /
+    ./entrypoint.py /
+    ./utils /
+    ./util /
+    ./metaparameters.json /
+    ./metaparameters_schema.json /
+    ./learned_parameters /
+    ./arch /
+    ./*.py /
+    ./*.json /
+
+%post
+    pip install --upgrade pip
+    pip install torchvision==0.14.1
+    pip install timm transformers==4.23.1 jsonschema jsonargparse jsonpickle scikit-learn scikit-image
+    # Needed for cv2
+    #apt -y install libglib2.0-0 libx11-6
+    pip install timm==0.6.7 opencv-python jsonschema jsonargparse
+    pip install matplotlib==3.5.2
+    pip install scikit-learn
+    pip install pandas
+    pip install scipy
+    pip install hyperopt
+
+%runscript
+    exec python3 /entrypoint.py "$@"
+
