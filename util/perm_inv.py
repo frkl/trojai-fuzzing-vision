@@ -7,7 +7,8 @@ import itertools
 import string
 import numpy
 
-#See Line 442 for usage
+#See Line 443 for example of generating 2-dim permutation-invariant features
+#See Line 106 for the function that enumerates order-n features that are permutation invariant to permutations in 2 dimensions
 
 def powerset(n):
     s = list(range(n))
