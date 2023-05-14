@@ -39,8 +39,23 @@ class MLP(nn.Module):
         h=self.layers[-1](h).view(*(list(x.shape[:-1])+[-1]));
         return h
 
-
-
+#BhXY => Bh10
+class inv23(nn.Module):
+    def forward(self,x):
+        h120=x.sum(dim=(-1,-2))
+        
+        h220=(x*x).sum(dim=(-1,-2))# aa bb
+        h230=(x.sum(dim=-1)*x.sum(dim=-1)).sum(dim=-1)# aa bc
+        h231=(x.sum(dim=-2)*x.sum(dim=-2)).sum(dim=-1)# ab cc
+        
+        h320=(x*x*x).sum(dim=(-1,-2)) # aaa bbb
+        h330=((x*x).sum(dim=-1)*x.sum(dim=-1)).sum(dim=-1) # aaa bbc
+        h331=((x*x).sum(dim=-2)*x.sum(dim=-2)).sum(dim=-1) # aab ccc
+        h340=(x.sum(dim=-1)*x.sum(dim=-1)*x.sum(dim=-1)).sum(dim=-1)# aaa bcd
+        h341=(x.sum(dim=-2)*x.sum(dim=-2)*x.sum(dim=-2)).sum(dim=-1)# abc ddd
+        h342=(torch.bmm(x.sum(dim=-1,keepdim=True).transpose(-1,-2),x).squeeze(dim=-2)*x.sum(dim=-2)).sum(dim=-1)# aab cdd
+        return torch.stack((h120,h220,h230,h231,h320,h330,h331,h340,h341,h342),dim=-1) #bh 10
+        
 
 
 class encoder(nn.Module):
@@ -93,11 +108,12 @@ class new(nn.Module):
         nlayers3=params.nlayers3
         self.margin=params.margin
         
-        self.encoder1=MLP(200*12,nh,nh2,nlayers)
+        self.pool=inv23()
+        self.encoder1=MLP(108,nh,nh2,nlayers)
         #self.encoder1=MLP(67,nh,nh2,nlayers);
         #self.encoder1=MLP(2400,512,512,4);
         #self.encoder2=MLP(nh,nh2,nh2,nlayers2);
-        self.encoder3=MLP(nh2,nh3,2,nlayers2);
+        self.encoder3=MLP(10*nh2,nh3,2,nlayers3);
         #self.encoder3=MLP(512,512,2,4);
         
         self.w=nn.Parameter(torch.Tensor(1).fill_(1));
@@ -106,15 +122,14 @@ class new(nn.Module):
         return;
     
     def forward(self,data_batch):
-        h=[];
         with torch.no_grad():
+            #print([fv.shape for fv in data_batch['fvs']]);
             fvs=[fv.to(self.w.device) for fv in data_batch['fvs']];
-            fvs=[fv[:,-12:,:].contiguous().view(-1,2400) for fv in fvs]
-            #fvs=[inv_net1(fv.permute(1,0,2)) for fv in fvs]
         
-        #print([fv.shape for fv in fvs])
-        h=[self.encoder1(fv.view(fv.shape[0],-1)).mean(dim=-2) for fv in fvs];
-        h=torch.stack(h,dim=0);
+        fvs=[self.encoder1(fv[:,:,:]) for fv in data_batch['fvs']];
+        fvs=[self.pool(fv.permute(2,0,1)).view(-1) for fv in fvs];
+        #fvs=[self.encoder2(fv).mean(dim=0) for fv in fvs];
+        h=torch.stack(fvs,dim=0);
         h=self.encoder3(h);
         
         h=torch.tanh(h)*self.margin;

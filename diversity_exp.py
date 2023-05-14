@@ -29,7 +29,7 @@ import helper_r13_v2 as helper
 #Find a good optimizer that descends fast for different objectives, different models, different examples
 #Basically, reaches a target utlization & size quickly under stochasticity
 
-def get_pred(interface,im):
+def get_pred(interface,im,gt):
     loss=interface.eval_loss({'image':im,'gt':gt})
     return loss
 
@@ -71,12 +71,13 @@ class diversity_grad:
         return g
     
     def sim_utilization(self,g0,g1):
-        g0=F.normalize(g0.view(-1),dim=-1)
-        g1=F.normalize(g1.view(-1),dim=-1)
-        diff=(g0*g1).sum()
-        return diff
+        #g0=F.normalize(g0.view(-1),dim=-1)
+        #g1=F.normalize(g1.view(-1),dim=-1)
+        #diff=(g0*g1).sum()
+        return 0#diff
     
     def loss_util(self,interface,im,gt,target_util):
+        return im.sum()*0
         if len(target_util)==0:
             return im.sum()*0
         
@@ -87,11 +88,13 @@ class diversity_grad:
         return gdiff
     
     def util(self,x,interface,im0,gt):
-        im=x.apply(im0)
-        return self.compute_grad(interface,im,gt)
+        #im=x.apply(im0)
+        return im0.sum()*0
+        return 0#self.compute_grad(interface,im,gt)
     
     def loss(self,x,interface,im0,gt,target_util):
         im=x.apply(im0)
+        return im0.sum()*0
         return self.loss_util(interface,im,gt,target_util)
 
 
@@ -107,16 +110,18 @@ def run(model,example,params=None):
     default_params=smartparse.obj();
     default_params.session_dir=None;
     default_params.arch='arch.meta_poly7';
-    default_params.opt='conv';
-    default_params.div='diversity_embed';
+    default_params.opt='conv_smp';
+    default_params.div='diversity_grad';
     default_params.load='';
-    default_params.round=10;
-    default_params.iter=500;
+    default_params.round=3;
+    default_params.iter=50;
     default_params.lr=1e-3;
     
     params=smartparse.merge(params,default_params)
+    gt=example['gt']
+    example=example['image'].cuda()
     
-    target_sz=-2.8
+    target_sz=-3.3
     diversity=globals()[params.div]();
     previous_grads=[];
     t0=time.time()
@@ -127,20 +132,25 @@ def run(model,example,params=None):
     triggers=[];
     for r in range(params.round):
         #Learn trigger generator
-        global arch
         arch=importlib.import_module(params.arch)
         trigger_gen=getattr(arch,params.opt)().cuda()
         opt=optim.Adam(trigger_gen.parameters(),lr=params.lr,betas=(0.5,0.7));
         best=1e10
         best_trigger=None
+        with torch.no_grad():
+            loss0=get_loss_label_(model,example,gt)
+            print('loss0',float(loss0))
         
         def eval_trigger(x):
             tracker=loss_tracker()
             loss_sz=get_loss_sz(x,target_sz_i) #Should not be off by more than 0.1
-            loss_label=get_loss_label(x,model,example) #Should not be more than 0.1
-            similarity=diversity.loss(x,model,example,previous_grads) #Minimizes this. range -1~1
-            loss_total= 2* sx2(similarity) + 1 * loss_sz**2 + 1 *loss_label**2
-            tracker.add(loss_sz=loss_sz,loss_label=loss_label,loss_total=loss_total,similarity=similarity,best=best)
+            loss_label=get_loss_label(x,model,example,gt) #Should not be more than 0.1
+            loss_label=(loss_label-loss0)
+            loss_label=F.sigmoid(-loss_label)*5
+            
+            similarity=diversity.loss(x,model,example,gt,previous_grads) #Minimizes this. range -1~1
+            loss_total= 2* sx2(similarity) + 1 *loss_label**2 + 1 * loss_sz**2
+            tracker.add(loss_label=loss_label,loss_total=loss_total,loss_sz=loss_sz,similarity=similarity,best=best)
             return loss_total,tracker
         
         for i in range(niter+1):
@@ -162,15 +172,20 @@ def run(model,example,params=None):
             
             if i%100==0 or i==niter:
                 print('iter %d-%d, %s, time %.2f'%(r,i,tracker.str(),time.time()-t0))
-            #    im=arch.apply(x,example)
-            #    torchvision.utils.save_image(im,session.file('vis','iter%02d_%05d.png'%(r,i)))
+                im=best_trigger.apply(example)
+                with torch.no_grad():
+                    loss=get_pred(model,im,gt)
+                    print(loss)
+                
+                #torchvision.utils.save_image(im,session.file('vis','iter%02d_%05d.png'%(r,i)))
+                #helper.visualize(data['fname'],{'scores':scores,'labels':labels,'boxes':boxes},threshold=0.1)
             
         loss_total,tracker=eval_trigger(best_trigger)
         print('iter %d best, %s'%(r,tracker.str()))
         
-        #im=arch.apply(best_trigger,example)
-        #torchvision.utils.save_image(im,session.file('vis','iter%02d_best.png'%(r)))
-        g=diversity.util(best_trigger,model,example).data
+        im=best_trigger.apply(example)
+        torchvision.utils.save_image(im,'debug.png')
+        g=diversity.util(best_trigger,model,example,gt).data.clone()
         previous_grads.append(g)
         triggers.append(best_trigger)
     
@@ -183,7 +198,7 @@ def run_color(model,example,params=None):
     default_params.opt='direct';
     default_params.div='diversity_embed';
     default_params.load='';
-    default_params.round=10;
+    default_params.round=3;
     default_params.iter=500;
     default_params.lr=1e-2;
     
@@ -242,7 +257,7 @@ def run_color(model,example,params=None):
         
         #im=arch.apply(best_trigger,example)
         #torchvision.utils.save_image(im,session.file('vis','iter%02d_best.png'%(r)))
-        g=diversity.util(best_trigger,model,example).data
+        g=diversity.util(best_trigger,model,example,gt).data
         previous_grads.append(g)
         triggers.append(best_trigger)
     
@@ -255,7 +270,7 @@ if __name__ == "__main__":
     default_params=smartparse.obj();
     default_params.session_dir=None;
     default_params.arch='arch.meta_poly7';
-    default_params.opt='conv_hie';
+    default_params.opt='conv_smp';
     default_params.div='diversity_grad';
     default_params.load='';
     default_params.round=90;
@@ -274,7 +289,7 @@ if __name__ == "__main__":
     weights_options=[(1,0,0),(0,1,0),(0,0,1),(1,1,1),(1,0,1),(0,1,1),(1,0.5,1),(1,0.2,1),(1,0.1,1)]
     #weights_options=[(0,0,1)]
     
-    examples=[e.load_examples() for e in models];
+    examples=[e.load_poisoned_examples() for e in models];
     
     
     
@@ -287,7 +302,7 @@ if __name__ == "__main__":
     example=examples[mid][eid]['image'].cuda();
     imname=examples[mid][eid]['fname']
     gt=examples[mid][eid]['gt'];
-    target_sz=-2.3
+    target_sz=-3.3
     diversity=globals()[params.div]();
     previous_grads=[];
     t0=time.time()

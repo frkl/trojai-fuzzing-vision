@@ -77,7 +77,6 @@ def extract_dataset(models_dirpath,ts_engine,params=None):
     default_params=smartparse.obj();
     default_params.rank=0
     default_params.world_size=1
-    default_params.repeats=1
     default_params.out=''
     default_params.preextracted=False
     
@@ -91,8 +90,7 @@ def extract_dataset(models_dirpath,ts_engine,params=None):
     t0=time.time()
     models=os.listdir(models_dirpath);
     models=sorted(models)
-    models=[(i,x) for i,x in enumerate(models)]*params.repeats
-    
+    models=[(i,x) for i,x in enumerate(models)]
     
     dataset=[];
     for i,fname in models[params.rank::params.world_size]:
@@ -149,8 +147,14 @@ def generate_probe_set(models_dirpath,params=None):
 
 def ts_engine(interface,additional_data='enum.pt',params=None):
     import diversity_exp2 as trigger_search
-    data=interface.load_examples()
+    data=list(interface.load_examples().rows())
+    data=data+interface.more_clean_examples()
     
+    data2=interface.load_poisoned_examples()
+    if not data2 is None:
+        data2=interface.target_to_source(data2)
+        data=data+list(data2.rows())[0:1]
+    '''
     new_data=[];
     for i in range(len(data)):
         im=data[i]['image']
@@ -165,6 +169,8 @@ def ts_engine(interface,additional_data='enum.pt',params=None):
             new_data.append(d);
     
     data=db.Table.from_rows(list(data.rows())+new_data)
+    '''
+    data=db.Table.from_rows(data)
     
     return data
 
@@ -193,7 +199,7 @@ def predict(ensemble,fvs):
 if __name__ == "__main__":
     import os
     default_params=smartparse.obj();
-    default_params.out='data_r13_trinity_v2'
+    default_params.out='data_r13_trinity_cheat'
     params=smartparse.parse(default_params);
     params.argv=sys.argv;
     

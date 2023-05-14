@@ -4,6 +4,7 @@ import math
 import time
 import sys
 import json
+import copy
 
 
 
@@ -67,13 +68,15 @@ class HP_config:
 
 
 class Dataset:
-    def __init__(self,split):
+    def __init__(self,split,n=1):
         self.data=split;
+        self.n=n
     
     def __len__(self):
-        return len(self.data)
+        return len(self.data)*self.n
     
     def __getitem__(self,i):
+        i=i%len(self.data)
         data=self.data[i];
         return data
 
@@ -100,10 +103,13 @@ def train(crossval_splits,params):
     nets=[];
     for split_id,split in enumerate(crossval_splits):
         data_train,data_val,data_test=split;
-        loader_train = DataLoader(Dataset(data_train.cuda()),collate_fn=collate,batch_size=params.batch,shuffle=True,drop_last=True,num_workers=0);
+        loader_train = DataLoader(Dataset(data_train,n=5),collate_fn=collate,batch_size=params.batch,shuffle=True,drop_last=True,num_workers=0);
+        loader_val = DataLoader(Dataset(data_val),collate_fn=collate,batch_size=params.batch,num_workers=0);
         net=arch.new(params).cuda();
-        opt=optim.AdamW(net.parameters(),lr=params.lr,weight_decay=params.decay);
+        opt=optim.Adam(net.parameters(),lr=params.lr);
         
+        best_net=copy.deepcopy(net)
+        best_loss=1e10
         for iter in range(params.epochs):
             net.train();
             for data_batch in loader_train:
@@ -112,24 +118,46 @@ def train(crossval_splits,params):
                 C=torch.LongTensor(data_batch['label']).cuda();
                 
                 #Cross entropy
-                scores_i=net.logp(data_batch)
-                loss=F.binary_cross_entropy_with_logits(scores_i,C.float());
+                #scores_i=net.logp(data_batch)
+                #loss=F.binary_cross_entropy_with_logits(scores_i,C.float());
                 
                 #Mutual information
-                '''
+                
                 scores_i=net(data_batch);
                 spos=scores_i.gather(1,C.view(-1,1)).mean();
                 sneg=torch.exp(scores_i).mean();
                 loss=-(spos-sneg+1);
-                '''
+                
                 
                 #L1-L2 
-                #l2=torch.stack([(p**2).sum() for p in net.parameters()],dim=0).sum()
-                #loss=loss+l2*params.decay;
+                l2=torch.stack([(p**2).sum() for p in net.parameters()],dim=0).sum()
+                loss=loss+l2*params.decay;
                 
                 loss.backward();
                 opt.step();
+                
+            #Evaluate
+            with torch.no_grad():
+                net.eval()
+                scores=[]
+                gt=[]
+                for data_batch in loader_val:
+                    data_batch.cuda();
+                    scores_i=net.logp(data_batch);
+                    scores.append(scores_i.data.cpu());
+                    gt.append(torch.LongTensor(data_batch['label']));
+                
+                scores=torch.cat(scores,dim=0);
+                gt=torch.cat(gt,dim=0);
+                loss_val=float(F.binary_cross_entropy_with_logits(scores,gt.float()));
+                
+                if loss_val<best_loss:
+                    best_loss=loss_val
+                    best_net=copy.deepcopy(net)
+            
+            #print(iter,loss_val)
         
+        net=best_net
         net.eval();
         nets.append(net);
     
@@ -140,7 +168,7 @@ def train(crossval_splits,params):
         data_train,data_val,data_test=split;
         net=nets[split_id];
         net.eval();
-        loader_val = DataLoader(Dataset(data_val.cuda()),collate_fn=collate,batch_size=params.batch,num_workers=0);
+        loader_val = DataLoader(Dataset(data_val),collate_fn=collate,batch_size=params.batch,num_workers=0);
         with torch.no_grad():
             for data_batch in loader_val:
                 data_batch.cuda();
@@ -246,8 +274,8 @@ def crossval_hyper(dataset,params):
     hp_config.add('loguniform','margin',low=2,high=1e1);
     
     hp_config.add('qloguniform','epochs',low=3,high=300);
-    hp_config.add('loguniform','lr',low=1e-5,high=1e-2);
-    hp_config.add('loguniform','decay',low=1e-5,high=1e1);
+    hp_config.add('loguniform','lr',low=1e-5,high=1e-1);
+    hp_config.add('loguniform','decay',low=1e-8,high=1e-2);
     hp_config.add('qloguniform','batch',low=8,high=64);
     
     #HP search function
@@ -277,13 +305,6 @@ def crossval_hyper(dataset,params):
 
 
 if __name__ == "__main__":
-    import util.perm_inv as inv
-    comps=[];
-    for i in range(1,6):
-        comps+=inv.generate_comps(i)
-    
-    inv_net1=inv.perm_inv2(comps,w=300,h=200)
-    
     class vector_log(torch.autograd.Function):
         @staticmethod
         def forward(ctx, x):
@@ -310,13 +331,71 @@ if __name__ == "__main__":
         dataset=[torch.load(os.path.join(params.data,fname)) for fname in os.listdir(params.data) if fname.endswith('.pt')];
         dataset=db.Table.from_rows(dataset)
     
+    '''
+    import util.perm_inv as inv
+    comps=[];
+    for i in range(1,6):
+        comps+=inv.generate_comps(i)
+    
+    inv_net1=inv.perm_inv2(comps,w=300,h=200)
+    
     with torch.no_grad():
         for i in range(len(dataset['fvs'])):
             fv=dataset['fvs'][i].cuda()
             #fv=vector_log(fv*1e3)
             fv=inv_net1(fv.permute(1,0,2))
             dataset['fvs'][i]=fv.cpu()
+    '''
     
+    import util.perm_inv as inv
+    comps=[];
+    for i in range(1,6):
+        comps+=inv.generate_comps(i)
+    
+    inv_net1=inv.perm_inv2(comps,w=300,h=200)
+    '''
+    comps_paired=[]
+    for prefix,suffix in comps:
+        comps_paired+=inv.validate_comps_paired(prefix,suffix,2)
+    
+    inv_net2=inv.perm_inv2_paired_suffix(comps_paired)
+    #x: nex, nlayers, 200
+    def preprocess_fv(x):
+        x=x.permute(2,0,1).contiguous().cuda()
+        x1=x.repeat(x.shape[0],1,1)
+        x2=x.repeat(1,x.shape[0],1)
+        x2=x2.view(x.shape[0]**2,x.shape[1],x.shape[2]);
+        fv=inv_net2((x1,x2)).cpu()
+        print(x.shape,'=>',fv.shape)
+        return fv
+    '''
+    
+    
+    for i in range(len(dataset['fvs'])):
+        fv=dataset['fvs'][i]
+        print((i,(1-torch.isfinite(fv).long()).sum()))
+    
+    '''
+    try:
+        with torch.no_grad():
+            fvs=[];
+            for i in range(len(dataset['fvs'])):
+                fv=dataset['fvs'][i].cuda()
+                #fv=torch.cat((fv[:,:,::10],fv[:,:,-1:]),dim=-1)
+                #fv=preprocess_fv(fv)
+                #fv=vector_log(fv)
+                #fv=vector_log(fv*1e3)
+                q=torch.arange(0,16)/15
+                fv=torch.quantile(fv.cpu(),q.view(-1))
+                #fv=inv_net1(fv)
+                print(fv.shape)
+                fvs.append(fv.cpu())
+            
+            dataset['fvs2']=fvs;
+    except:
+        pass
+        a=0/0
+    '''
     
     crossval_hyper(dataset,params)
     

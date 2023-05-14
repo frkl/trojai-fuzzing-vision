@@ -14,5 +14,10 @@ __pychache__
 *.log 
 *.out
 
+*.csv
+*.xlsx
+*.png
+*.jpg
+
 token.pickle
 .cache
