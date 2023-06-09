@@ -103,7 +103,19 @@ class conv_smp(nn.Module):
     def __init__(self,c=3,h=64,w=64,nh=32):
         super().__init__()
         self.h=nn.Parameter(torch.Tensor(1,nh,h,w).uniform_(-0.1,0.1));
-        self.decoder=smp.Unet(encoder_name="resnet50",encoder_weights="imagenet",in_channels=nh,classes=4+c)
+        try:
+            a=0/0
+            self.decoder=smp.Unet(encoder_name="resnet50",encoder_weights="imagenet",in_channels=nh,classes=4+c)
+        except:
+            self.decoder=smp.Unet(encoder_name="resnet50",encoder_weights=None,in_channels=nh,classes=4+c)
+            try:
+                checkpoint=torch.load('smp_checkpoint.pt')
+            except:
+                checkpoint=torch.load('/smp_checkpoint.pt')
+            
+            self.decoder.load_state_dict(checkpoint)
+                
+            
     
     def forward(self):
         return trigger(self.decoder(self.h))

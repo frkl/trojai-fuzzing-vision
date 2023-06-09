@@ -108,8 +108,8 @@ def train(crossval_splits,params):
         net=arch.new(params).cuda();
         opt=optim.Adam(net.parameters(),lr=params.lr);
         
-        #best_net=copy.deepcopy(net)
-        #best_loss=1e10
+        best_net=copy.deepcopy(net)
+        best_loss=1e10
         for iter in range(params.epochs):
             net.train();
             for data_batch in loader_train:
@@ -135,7 +135,7 @@ def train(crossval_splits,params):
                 
                 loss.backward();
                 opt.step();
-            '''
+                
             #Evaluate
             with torch.no_grad():
                 net.eval()
@@ -154,10 +154,10 @@ def train(crossval_splits,params):
                 if loss_val<best_loss:
                     best_loss=loss_val
                     best_net=copy.deepcopy(net)
-            '''
+            
             #print(iter,loss_val)
         
-        #net=best_net
+        net=best_net
         net.eval();
         nets.append(net);
     
@@ -184,11 +184,11 @@ def train(crossval_splits,params):
     opt2=optim.Adamax([T],lr=3e-2);
     for iter in range(500):
         opt2.zero_grad();
-        loss=F.binary_cross_entropy_with_logits(scores.cuda()*torch.exp(-T.clamp(min=-8,max=8)),gt.float().cuda());
+        loss=F.binary_cross_entropy_with_logits(scores.cuda()*torch.exp(-T),gt.float().cuda());
         loss.backward();
         opt2.step();
     
-    T=float(T.clamp(min=-8,max=8).data)
+    T=float(T.data)
     
     #Eval
     scores=[];
@@ -211,7 +211,6 @@ def train(crossval_splits,params):
     scores_T=scores*math.exp(-T)
     gt=torch.cat(gt,dim=0);
     
-    print(gt)
     auc,ce,cestd=metrics(scores,gt)
     _,ce_T,cestd_T=metrics(scores_T,gt)
     

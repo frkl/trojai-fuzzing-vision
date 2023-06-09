@@ -10,6 +10,10 @@ process = subprocess.Popen(["git", "ls-remote", url], stdout=subprocess.PIPE)
 stdout, stderr = process.communicate()
 sha = re.split(r'\t+', stdout.decode('ascii'))[0]
 print(sha)
+
+
+
+sha='d07fd16' #override sha
 '''
 from parse import parse
 import sys, zlib
@@ -56,7 +60,7 @@ for cfg in hp_config:
 
 
 meta_schema={"$schema": "http://json-schema.org/draft-07/schema#","title": "SRI Trinity Framework",
-"technique": "SRI unified trigger search + gradient analysis","technique_description": "Color filter trigger search and analyzing Jacobians of triggered images.","technique_changes": "Adding color filter trigger search. Some bug fixes on inferencing and loss calculation. Small changes to classifier design.","technique_type": ["Trigger Inversion", "Jacobian Inspection"],"commit_id": sha,"repo_name": url,"required": [],"additionalProperties": False,"type": "object"}
+"technique": "SRI trigger search + prediction change","technique_description": "Check models' response on a set of pre-determined patch triggers and measure change in model's response","technique_changes": "Use a new permutation invariant classifier architecture to improve learning. New hyperparameters for classifier learning. Directly measures prediction change on a set of pre-defined triggers to eliminate bottlenecks in the pipeline. ","technique_type": ["Trigger Inversion"],"commit_id": sha,"repo_name": url,"required": [],"additionalProperties": False,"type": "object"}
 meta_schema['properties']=template;
 
 #Generate metaparam file

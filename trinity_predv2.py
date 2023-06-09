@@ -9,7 +9,7 @@ import copy
 import torch
 import util.db as db
 import util.smartparse as smartparse
-import helper_r13_v2 as helper
+import helper_r13_v3 as helper
 import torch.nn.functional as F
 
 def encode_confusion(X,Y):
@@ -192,13 +192,13 @@ def ts_engine(interface,additional_data='enum.pt',params=None):
     data=interface.load_examples()
     data=data+interface.more_clean_examples()
     #A list of random-colored patches as the trigger
-    #triggers=[x['trigger'] for x in interface.get_triggers()]
+    triggers=[x['trigger'] for x in interface.get_triggers()]
     #if len(triggers)==0:
     #    trigger=torch.Tensor([1,0,1,1]).view(4,1,1)
     #    triggers.append(trigger)
     
     
-    triggers=[]
+    #triggers=[]
     for r in [0,0.5,1.0]:
         for g in [0,0.5,1.0]:
             for b in [0,0.5,1.0]:
@@ -250,7 +250,7 @@ def predict(ensemble,fvs):
 if __name__ == "__main__":
     import os
     default_params=smartparse.obj(); 
-    default_params.out='data_r13_trinity_pred2c'
+    default_params.out='data_r13_trinity_predv2_cheat'
     params=smartparse.parse(default_params);
     params.argv=sys.argv;
     

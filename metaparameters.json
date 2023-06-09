@@ -1,1 +1,1 @@
-{"arch": "arch.mlp_set5d", "nh": 501, "nh2": 17, "nh3": 125, "nlayers": 1, "nlayers2": 11, "nlayers3": 1, "margin": 2.5646245451375873, "epochs": 115, "lr": 0.001718789983854141, "decay": 0.03017553032975423, "batch": 14}
+{"arch": "arch.mlp_set5d2", "nh": 95, "nh2": 30, "nh3": 26, "nlayers": 5, "nlayers2": 5, "nlayers3": 6, "margin": 4.319032102483472, "epochs": 179, "lr": 0.0016661224678392928, "decay": 4.064716505295632e-05, "batch": 30}

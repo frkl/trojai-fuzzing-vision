@@ -123,10 +123,12 @@ def extract_dataset(models_dirpath,ts_engine,params=None):
     
     params=smartparse.merge(params,default_params)
     
+    '''
     if params.preextracted:
         dataset=[torch.load(os.path.join('data_r13_trinity_v1',fname)) for fname in os.listdir(params.data) if fname.endswith('.pt')];
         dataset=db.Table.from_rows(dataset)
         return dataset
+    '''
     
     t0=time.time()
     models=os.listdir(models_dirpath);

@@ -139,7 +139,7 @@ def run(model,example,params=None):
         best_trigger=None
         with torch.no_grad():
             loss0=get_loss_label_(model,example,gt)
-            print('loss0',float(loss0))
+            #print('loss0',float(loss0))
         
         def eval_trigger(x):
             tracker=loss_tracker()
@@ -171,11 +171,11 @@ def run(model,example,params=None):
                 best_trigger=x.detach().clone()
             
             if i%100==0 or i==niter:
-                print('iter %d-%d, %s, time %.2f'%(r,i,tracker.str(),time.time()-t0))
+                #print('iter %d-%d, %s, time %.2f'%(r,i,tracker.str(),time.time()-t0))
                 im=best_trigger.apply(example)
                 with torch.no_grad():
                     loss=get_pred(model,im,gt)
-                    print(loss)
+                    #print(loss)
                 
                 #torchvision.utils.save_image(im,session.file('vis','iter%02d_%05d.png'%(r,i)))
                 #helper.visualize(data['fname'],{'scores':scores,'labels':labels,'boxes':boxes},threshold=0.1)
@@ -184,7 +184,7 @@ def run(model,example,params=None):
         print('iter %d best, %s'%(r,tracker.str()))
         
         im=best_trigger.apply(example)
-        torchvision.utils.save_image(im,'debug.png')
+        #torchvision.utils.save_image(im,'debug.png')
         g=diversity.util(best_trigger,model,example,gt).data.clone()
         previous_grads.append(g)
         triggers.append(best_trigger)

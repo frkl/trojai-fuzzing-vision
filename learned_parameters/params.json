@@ -1,1 +1,1 @@
-{"arch": "arch.mlp_set5d", "session_dir": null, "data": "data_r13_trinity_pred2/", "argv": ["crossval.py", "--data", "data_r13_trinity_pred2/", "--arch", "arch.mlp_set5d"]}
+{"arch": "arch.mlp_set5d2", "session_dir": null, "data": "./data_r13_trinity_predv2/", "argv": ["crossval.py", "--data", "./data_r13_trinity_predv2/", "--arch", "arch.mlp_set5d2"]}

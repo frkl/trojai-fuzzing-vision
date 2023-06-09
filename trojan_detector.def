@@ -12,12 +12,14 @@ From: pytorch/pytorch:1.13.1-cuda11.6-cudnn8-runtime
     ./learned_parameters /
     ./arch /
     ./*.py /
+    ./smp_checkpoint.pt /
     ./*.json /
 
 %post
     pip install --upgrade pip
     pip install torchvision==0.14.1
     pip install timm==0.6.7 transformers==4.23.1 jsonschema jsonargparse jsonpickle scikit-learn scikit-image
+    pip install segmentation_models_pytorch
     # Needed for cv2
     #apt -y install libglib2.0-0 libx11-6
     pip install timm==0.6.7 opencv-python jsonschema jsonargparse

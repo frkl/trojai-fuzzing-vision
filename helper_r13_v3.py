@@ -264,7 +264,7 @@ def compare_boxes(pred0,pred1,nclasses):
 
 
 def root():
-    return '../trojai-datasets/object-detection-feb2023'
+    return '../trojai-datasets/object-detection-feb2023v2'
 
 def get(id):
     folder=os.path.join(root(),'models','id-%08d'%id)
@@ -389,7 +389,7 @@ class engine:
             
             if boxid is None or len(data[i]['gt'])==0:
                 #Paste at random location
-                sz=int(torch.LongTensor(1).random_(20,50))
+                sz=int(torch.LongTensor(1).random_(10,30))
                 x=int(torch.LongTensor(1).random_(0,W-sz+1))
                 y=int(torch.LongTensor(1).random_(0,H-sz+1))
                 new_image=self.paste_trigger(new_image,trigger,(x,y,x+sz,y+sz))
