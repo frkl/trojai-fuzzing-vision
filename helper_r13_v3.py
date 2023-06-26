@@ -13,6 +13,8 @@ import torch
 import torch.nn as nn
 import torchvision
 import torch.nn.functional as F
+import torch.utils.data
+from torch.utils.data import DataLoader
 from torchvision import transforms
 import torchvision.datasets.folder
 
@@ -74,7 +76,7 @@ def prepare_boxes_as_prediction(anns):
     
     return {'boxes':boxes,'labels':labels,'scores':scores}
 
-    
+
 
 def prepare_boxes_detr(anns, image_id,imw,imh):
     if len(anns) > 0:
@@ -260,6 +262,48 @@ def compare_boxes(pred0,pred1,nclasses):
     '''
     return scores
 
+def compare_boxes_v2(pred0,pred1,nclasses):
+    t0=time.time()
+    s={};
+    #ind0=pred0['scores'].gt(0.1).nonzero().view(-1)
+    #ind1=pred1['scores'].gt(0.1).nonzero().view(-1)
+    
+    bbox0=pred0['boxes'].cuda()
+    bbox1=pred1['boxes'].cuda()
+    
+    labels_0=pred0['labels'].tolist()
+    labels_1=pred1['labels'].tolist()
+    scores_0=pred0['scores'].tolist()
+    scores_1=pred1['scores'].tolist()
+    
+    iou=torchvision.ops.box_iou(bbox0,bbox1)
+    #iou=iou_batch(bbox0,bbox1)
+    dist=torch.cdist((bbox0[:,:2]+bbox0[:,2:4])/2,(bbox1[:,:2]+bbox1[:,2:4])/2)
+    same_label=torch.LongTensor(labels_0).view(-1,1)==torch.LongTensor(labels_1).view(1,-1)
+    dist=dist+(1-same_label.to(dist.device).long())*1e3
+    idx=[]
+    val=[]
+    for i in range(len(bbox0)):
+        if len(bbox1)>0:
+            max_iou,id_max_iou=iou[i].max(dim=0)
+            id_max_iou=int(id_max_iou)
+            min_dist,id_min_dist=dist[i].min(dim=0)
+            id_min_dist=int(id_min_dist)
+            
+            idx.append((labels_0[i],labels_1[id_max_iou]))
+            v=bbox0[i].tolist()+bbox1[id_max_iou].tolist()+bbox1[id_min_dist].tolist()
+            v+=[float(max_iou),float(min_dist),scores_0[i],scores_1[id_max_iou],scores_1[id_min_dist],1]
+            val.append(v)
+        else:
+            idx.append((labels_0[i],labels_0[i]))
+            
+            v=bbox0[i].tolist()+[0,0,0,0]+[0,0,0,0]
+            v+=[0,0,0,0,0,1]
+            val.append(v)
+    
+    
+    return idx,val
+
 #h=compare_boxes(pred,pred,64)
 
 
@@ -269,6 +313,19 @@ def root():
 def get(id):
     folder=os.path.join(root(),'models','id-%08d'%id)
     return engine(folder)
+
+class dset:
+    def __init__(self,data):
+        self.data=data
+    
+    def __len__(self):
+        return len(self.data)
+    
+    def __getitem__(self,i):
+        im=self.data[i]['image'].squeeze(dim=0)
+        return im
+
+    
 
 #The user provided engine that our algorithm interacts with
 class engine:
@@ -379,42 +436,59 @@ class engine:
             
             #Try to find object as specified
             if isinstance(source,int):
-                for i,bbox in enumerate(data[i]['gt']):
+                for j,bbox in enumerate(data[i]['gt']):
                     if bbox['label']==source:
-                        boxid=i
-                        break;
-            elif isinstance(source,str) and source=='any':
-                if len(data[i]['gt'])>0:
-                    boxid=int(torch.LongTensor(1).random_(len(data[i]['gt'])))
-            
-            if boxid is None or len(data[i]['gt'])==0:
-                #Paste at random location
-                sz=int(torch.LongTensor(1).random_(10,30))
-                x=int(torch.LongTensor(1).random_(0,W-sz+1))
-                y=int(torch.LongTensor(1).random_(0,H-sz+1))
-                new_image=self.paste_trigger(new_image,trigger,(x,y,x+sz,y+sz))
-            else:
-                #Paste on box
-                bbox=data[i]['gt'][boxid]
-                x1,y1,x2,y2=[int(bbox['bbox'][s]) for s in ['x1','y1','x2','y2']]
-                #Shrink area to 70% so we get to center of the object
-                cx=(x1+x2)/2
-                cy=(y1+y2)/2
-                w=x2-x1
-                h=y2-y1
+                        #Paste on box
+                        x1,y1,x2,y2=[int(bbox['bbox'][s]) for s in ['x1','y1','x2','y2']]
+                        #Shrink area to 70% so we get to center of the object
+                        cx=(x1+x2)/2
+                        cy=(y1+y2)/2
+                        w=x2-x1
+                        h=y2-y1
+                        
+                        x1=int(cx-w*0.45)
+                        x2=int(cx+w*0.45)
+                        y1=int(cy-h*0.45)
+                        y2=int(cy+h*0.45)
+                        
+                        sz=int(torch.LongTensor(1).random_(10,15))
+                        sz=min(min(sz,x2-x1),y2-y1)
+                        x=int(torch.LongTensor(1).random_(x1,x2-sz+1))
+                        y=int(torch.LongTensor(1).random_(y1,y2-sz+1))
+                        new_image=self.paste_trigger(new_image,trigger,(x,y,x+sz,y+sz))
+            elif source is None:# or (isinstance(source,str) and source=='any'):
+                #if len(data[i]['gt'])>0:
+                #    boxid=int(torch.LongTensor(1).random_(len(data[i]['gt'])))
                 
-                x1=int(cx-w*0.35)
-                x2=int(cx+w*0.35)
-                y1=int(cy-h*0.35)
-                y2=int(cy+h*0.35)
-                
-                sz=int(torch.LongTensor(1).random_(10,30))
-                sz=min(min(sz,x2-x1),y2-y1)
-                x=int(torch.LongTensor(1).random_(x1,x2-sz+1))
-                y=int(torch.LongTensor(1).random_(y1,y2-sz+1))
-                new_image=self.paste_trigger(new_image,trigger,(x,y,x+sz,y+sz))
+                if boxid is None or len(data[i]['gt'])==0:
+                    #Paste at random location
+                    sz=int(torch.LongTensor(1).random_(10,15))
+                    x=int(torch.LongTensor(1).random_(0,W-sz+1))
+                    y=int(torch.LongTensor(1).random_(0,H-sz+1))
+                    new_image=self.paste_trigger(new_image,trigger,(x,y,x+sz,y+sz))
+                else:
+                    #Paste on box
+                    bbox=data[i]['gt'][boxid]
+                    x1,y1,x2,y2=[int(bbox['bbox'][s]) for s in ['x1','y1','x2','y2']]
+                    #Shrink area to 70% so we get to center of the object
+                    cx=(x1+x2)/2
+                    cy=(y1+y2)/2
+                    w=x2-x1
+                    h=y2-y1
+                    
+                    x1=int(cx-w*0.45)
+                    x2=int(cx+w*0.45)
+                    y1=int(cy-h*0.45)
+                    y2=int(cy+h*0.45)
+                    
+                    sz=int(torch.LongTensor(1).random_(10,15))
+                    sz=min(min(sz,x2-x1),y2-y1)
+                    x=int(torch.LongTensor(1).random_(x1,x2-sz+1))
+                    y=int(torch.LongTensor(1).random_(y1,y2-sz+1))
+                    new_image=self.paste_trigger(new_image,trigger,(x,y,x+sz,y+sz))
             
             data[i]['image']=new_image.unsqueeze(0)
+            data[i]['trigger_loc']=[x,y,x+sz,y+sz]
             data[i]['fname']+=suffix
         
         return data
@@ -487,18 +561,42 @@ class engine:
         augmentation_transforms = torchvision.transforms.Compose([torchvision.transforms.ConvertImageDtype(torch.float)])
         fns=[os.path.join(examples_dirpath, fn) for fn in os.listdir(examples_dirpath) if fn.endswith('.png') or fn.endswith('.PNG') or fn.endswith('.jpg') or fn.endswith('.JPG')]
         fns.sort()
-        if len(fns)>40:
-            ind=torch.randperm(len(fns))
-            fns=[fns[i] for i in ind[:40]]
+        
+        #Filter GT by class it represents
+        samples={}
+        for fn in fns:
+            fn_gt=fn
+            fn_gt = fn_gt.replace('.png','.json')
+            with open(fn_gt, mode='r', encoding='utf-8') as f:
+                gt = jsonpickle.decode(f.read())
+                if len(gt)>0:
+                    try:
+                        _=gt[0]['label']
+                    except:
+                        gt=gt[1:]
+            
+            for box in gt:
+                if not box['label'] in samples:
+                    samples[box['label']]=[]
+                
+                samples[box['label']].append(fn)
+        
+        #Extract up to 3 fn per class
+        fns=[]
+        for c in samples:
+            n=len(samples[c])
+            ind=torch.randperm(n)[:3].tolist()
+            fns+=[(samples[c][i],c) for i in ind]
         
         
         images=[];
         image_paths=[];
         targets=[];
         anns=[];
+        nclasses=self.nclasses()
         
         data=[];
-        for fn in fns:
+        for fn,source in fns:
             fn_gt=fn
             fn_gt = fn_gt.replace('.png','.json')
             #fn_gt = fn_gt.replace('.jpg','.json')
@@ -517,7 +615,7 @@ class engine:
             image = image.permute((2, 0, 1))
             image = augmentation_transforms(image).unsqueeze(0)
             
-            data.append({'image':image,'fname':fn,'gt':gt})
+            data.append({'image':image,'fname':fn,'gt':gt,'source':source})
         
         #data=db.Table.from_rows(data)
         return data
@@ -770,33 +868,42 @@ class engine:
         #visualize(data['fname'],{'scores':scores,'labels':labels,'boxes':boxes},threshold=0.1)
         return {'scores':scores,'labels':labels,'boxes':boxes}
     
-    def eval_batch(self, data):
-        ims=torch.cat([x['image'] for x in data],dim=0)
+    
+    def eval_batch(self, data,batch_size=4):
         if 'DetrForObjectDetection' in self.model.__class__.__name__:
-            
-            with torch.no_grad():
-                outputs=self.model(ims.cuda())
-            
             results=[]
-            for i in range(len(outputs.logits)):
-                boxes = decode_boxes_detr(outputs.pred_boxes[i],ims.shape[-1],ims.shape[-2])
-                logits = outputs.logits[i]
-                probs = F.softmax(logits,dim=-1)[:,:-1]
-                scores,labels=probs.max(dim=-1)
-                results.append({'scores':scores,'labels':labels,'boxes':boxes})
+            loader=DataLoader(dset(data),batch_size=batch_size,num_workers=16,drop_last=False)
+            for j,ims in enumerate(loader):
+                if j%10==0 and j>0:
+                    print('eval %d/%d   '%(j,len(loader)),end='\r')
+                
+                with torch.no_grad():
+                    outputs=self.model(ims.cuda())
+                
+                for i in range(len(outputs.logits)):
+                    boxes = decode_boxes_detr(outputs.pred_boxes[i],ims.shape[-1],ims.shape[-2])
+                    logits = outputs.logits[i]
+                    probs = F.softmax(logits,dim=-1)[:,:-1]
+                    scores,labels=probs.max(dim=-1)
+                    results.append({'scores':scores,'labels':labels,'boxes':boxes})
             
             return results
         else:
-            self.model.eval()
-            with torch.no_grad():
-                outputs=self.model(ims.cuda())
-            
             results=[]
-            for output in outputs:
-                boxes = output['boxes']
-                scores = output['scores']
-                labels= output['labels']
-                results.append({'scores':scores,'labels':labels,'boxes':boxes})
+            self.model.eval()
+            loader=DataLoader(dset(data),batch_size=batch_size,num_workers=16,drop_last=False)
+            for j,ims in enumerate(loader):
+                if j%10==0 and j>0:
+                    print('eval %d/%d   '%(j,len(loader)),end='\r')
+                
+                with torch.no_grad():
+                    outputs=self.model(ims.cuda())
+                
+                for output in outputs:
+                    boxes = output['boxes']
+                    scores = output['scores']
+                    labels= output['labels']
+                    results.append({'scores':scores,'labels':labels,'boxes':boxes})
             
             self.enable_loss()
             return results

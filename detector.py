@@ -25,7 +25,7 @@ import skimage.io
 import util.smartparse as smartparse
 import util.db as db
 import helper_r13_v3 as helper
-import trinity_predv2 as trinity
+import trinity_predv7 as trinity
 import crossval
 
 def center_to_corners_format(x):
