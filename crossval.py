@@ -4,6 +4,7 @@ import math
 import time
 import sys
 import json
+import copy
 
 
 
@@ -67,13 +68,15 @@ class HP_config:
 
 
 class Dataset:
-    def __init__(self,split):
+    def __init__(self,split,n=1):
         self.data=split;
+        self.n=n
     
     def __len__(self):
-        return len(self.data)
+        return len(self.data)*self.n
     
     def __getitem__(self,i):
+        i=i%len(self.data)
         data=self.data[i];
         return data
 
@@ -100,10 +103,13 @@ def train(crossval_splits,params):
     nets=[];
     for split_id,split in enumerate(crossval_splits):
         data_train,data_val,data_test=split;
-        loader_train = DataLoader(Dataset(data_train),collate_fn=collate,batch_size=params.batch,shuffle=True,drop_last=True,num_workers=0);
+        loader_train = DataLoader(Dataset(data_train,n=5),collate_fn=collate,batch_size=params.batch,shuffle=True,drop_last=True,num_workers=0);
+        loader_val = DataLoader(Dataset(data_val),collate_fn=collate,batch_size=params.batch,num_workers=0);
         net=arch.new(params).cuda();
         opt=optim.Adam(net.parameters(),lr=params.lr);
         
+        #best_net=copy.deepcopy(net)
+        #best_loss=1e10
         for iter in range(params.epochs):
             net.train();
             for data_batch in loader_train:
@@ -112,14 +118,16 @@ def train(crossval_splits,params):
                 C=torch.LongTensor(data_batch['label']).cuda();
                 
                 #Cross entropy
-                #scores_i=net.logp(data_batch)
-                #loss=F.binary_cross_entropy_with_logits(scores_i,C.float());
+                scores_i=net.logp(data_batch)
+                loss=F.binary_cross_entropy_with_logits(scores_i,C.float());
                 
                 #Mutual information
+                '''
                 scores_i=net(data_batch);
                 spos=scores_i.gather(1,C.view(-1,1)).mean();
                 sneg=torch.exp(scores_i).mean();
                 loss=-(spos-sneg+1);
+                '''
                 
                 #L1-L2 
                 l2=torch.stack([(p**2).sum() for p in net.parameters()],dim=0).sum()
@@ -127,7 +135,29 @@ def train(crossval_splits,params):
                 
                 loss.backward();
                 opt.step();
+            '''
+            #Evaluate
+            with torch.no_grad():
+                net.eval()
+                scores=[]
+                gt=[]
+                for data_batch in loader_val:
+                    data_batch.cuda();
+                    scores_i=net.logp(data_batch);
+                    scores.append(scores_i.data.cpu());
+                    gt.append(torch.LongTensor(data_batch['label']));
+                
+                scores=torch.cat(scores,dim=0);
+                gt=torch.cat(gt,dim=0);
+                loss_val=float(F.binary_cross_entropy_with_logits(scores,gt.float()));
+                
+                if loss_val<best_loss:
+                    best_loss=loss_val
+                    best_net=copy.deepcopy(net)
+            '''
+            #print(iter,loss_val)
         
+        #net=best_net
         net.eval();
         nets.append(net);
     
@@ -154,11 +184,11 @@ def train(crossval_splits,params):
     opt2=optim.Adamax([T],lr=3e-2);
     for iter in range(500):
         opt2.zero_grad();
-        loss=F.binary_cross_entropy_with_logits(scores.cuda()*torch.exp(-T),gt.float().cuda());
+        loss=F.binary_cross_entropy_with_logits(scores.cuda()*torch.exp(-T.clamp(min=-8,max=8)),gt.float().cuda());
         loss.backward();
         opt2.step();
     
-    T=float(T.data)
+    T=float(T.clamp(min=-8,max=8).data)
     
     #Eval
     scores=[];
@@ -168,7 +198,7 @@ def train(crossval_splits,params):
         data_train,data_val,data_test=split;
         net=nets[split_id];
         net.eval();
-        loader_test = DataLoader(Dataset(data_test),collate_fn=collate,batch_size=params.batch,num_workers=0);
+        loader_test = DataLoader(Dataset(data_test.cuda()),collate_fn=collate,batch_size=params.batch,num_workers=0);
         with torch.no_grad():
             for data_batch in loader_test:
                 data_batch.cuda();
@@ -181,6 +211,7 @@ def train(crossval_splits,params):
     scores_T=scores*math.exp(-T)
     gt=torch.cat(gt,dim=0);
     
+    #print(gt)
     auc,ce,cestd=metrics(scores,gt)
     _,ce_T,cestd_T=metrics(scores_T,gt)
     
@@ -244,8 +275,8 @@ def crossval_hyper(dataset,params):
     hp_config.add('loguniform','margin',low=2,high=1e1);
     
     hp_config.add('qloguniform','epochs',low=3,high=300);
-    hp_config.add('loguniform','lr',low=1e-5,high=1e-2);
-    hp_config.add('loguniform','decay',low=1e-8,high=1e-3);
+    hp_config.add('loguniform','lr',low=1e-5,high=1e-1);
+    hp_config.add('loguniform','decay',low=1e-8,high=1e-2);
     hp_config.add('qloguniform','batch',low=8,high=64);
     
     #HP search function
@@ -277,12 +308,22 @@ def crossval_hyper(dataset,params):
 if __name__ == "__main__":
     import os
     default_params=smartparse.obj();
-    default_params.data='data_r11_trinity_v0'
+    default_params.data='fvs_weight'
     params=smartparse.parse(default_params);
     params.argv=sys.argv;
     
-    dataset=[torch.load(os.path.join(params.data,fname)) for fname in os.listdir(params.data) if fname.endswith('.pt')];
-    dataset=db.Table.from_rows(dataset)
+    if params.data.endswith('.pt'):
+        dataset=db.DB.load(params.data)
+        dataset=dataset['table_ann']
+    else:
+        dataset=[torch.load(os.path.join(params.data,fname)) for fname in os.listdir(params.data) if fname.endswith('.pt')];
+        dataset=db.Table.from_rows(dataset)
+    
+    with torch.no_grad():
+        for i in range(len(dataset['fvs'])):
+            fv=dataset['fvs'][i].cuda()
+            dataset['fvs'][i]=fv
+    
     crossval_hyper(dataset,params)
     
 

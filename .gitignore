@@ -2,11 +2,9 @@
 output.txt
 test.txt
 features.csv
-*.pt
-*.simg
-*.png
-vis/
-sessions/
+model/id-00000000
+model/id-00000001
+model/object-detection-feb2023-example
 
 # Python
 __pychache__
@@ -15,6 +13,11 @@ __pychache__
 *.sif
 *.log 
 *.out
+
+*.csv
+*.xlsx
+*.png
+*.jpg
 
 token.pickle
 .cache

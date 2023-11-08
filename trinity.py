@@ -9,33 +9,11 @@ import copy
 import torch
 import util.db as db
 import util.smartparse as smartparse
-import helper_r11_v2 as helper
 
 
-#Interface spec
-# Interface.model: nn.Module
-#   support zero_grad()
-#   support named_parameters()
-
-# load_examples: returns a table of examples
-# eval: return correctness: loss value of one or multiple examples
+import helper_r13_v0 as helper
 
 
-def compute_grad(interface,example):
-    interface.model.zero_grad()
-    s=interface.eval(example)
-    loss=s
-    loss.backward()
-    params=interface.model.named_parameters();
-    g=[];
-    for k,p in params:
-        #if not p.grad is None:
-        g.append(p.grad.data.clone().cpu())
-        #print(p.grad.max(),p.grad.min())
-        #else:
-        #    g.append(None)
-    
-    return g
 
 def analyze_tensor(w,params=None):
     default_params=smartparse.obj();
@@ -51,20 +29,19 @@ def analyze_tensor(w,params=None):
         fv=torch.cat((hw,hw_abs),dim=0);
         return fv;
 
-def grad2fv(g,params=None):
-    fvs=[analyze_tensor(w.cuda(),params) for w in g]
+def weight2fv(g,params=None):
+    fvs=[analyze_tensor(w.data.cuda(),params) for w in g]
     fvs=torch.stack(fvs,dim=0);
     return fvs;
 
 def characterize(interface,data=None,params=None):
-    if data is None:
-        data=interface.load_examples()
-    
-    fvs=[grad2fv(compute_grad(interface,data[i]),params) for i in range(len(data))]
-    fvs=torch.stack(fvs,dim=0);
+    fvs=weight2fv(interface.model.parameters(),params)
     print(fvs.shape)
     return {'fvs':fvs}
 
+
+def ts_engine(interface,additional_data='enum.pt',params=None):
+    return None
 
 def extract_fv(interface,ts_engine,params=None):
     data=ts_engine(interface,params=params);
@@ -78,19 +55,17 @@ def extract_dataset(models_dirpath,ts_engine,params=None):
     default_params.rank=0
     default_params.world_size=1
     default_params.out=''
+    
     params=smartparse.merge(params,default_params)
     
     t0=time.time()
     models=os.listdir(models_dirpath);
     models=sorted(models)
-    
     models=[(i,x) for i,x in enumerate(models)]
-    
     
     dataset=[];
     for i,fname in models[params.rank::params.world_size]:
         folder=os.path.join(models_dirpath,fname);
-        
         interface=helper.engine(folder=folder,params=params)
         fvs=extract_fv(interface,ts_engine,params=params);
         
@@ -117,46 +92,6 @@ def extract_dataset(models_dirpath,ts_engine,params=None):
     dataset=db.Table.from_rows(dataset);
     return dataset;
 
-def generate_probe_set(models_dirpath,params=None):
-    models=os.listdir(models_dirpath)
-    models=sorted(models)
-    
-    all_data=[];
-    for m in models[:len(models)//2]:
-        interface=helper.engine(os.path.join(models_dirpath,m))
-        data=interface.load_examples()
-        data=list(data.rows())
-        
-        try:
-            data2=interface.load_examples(os.path.join(models_dirpath,m,'poisoned-example-data'))
-            data2=list(data2.rows())
-            data+=data2
-        except:
-            pass;
-        
-        all_data+=data;
-    
-    all_data=db.Table.from_rows(all_data)
-    return all_data
-
-
-def ts_engine(interface,additional_data='enum.pt',params=None):
-    data=interface.load_examples()
-    labels=set(data['label'])
-    print(labels)
-    new_data=[];
-    for i in range(len(data)):
-        for j in labels:
-            d=copy.deepcopy(data[i]);
-            d['label']=j;
-            new_data.append(d);
-    
-    data=db.Table.from_rows(new_data)
-    
-    return data
-
-
-
 def predict(ensemble,fvs):
     scores=[];
     with torch.no_grad():
@@ -177,10 +112,13 @@ def predict(ensemble,fvs):
     trojan_probability=float(s);
     return trojan_probability
 
+
 if __name__ == "__main__":
     import os
     default_params=smartparse.obj();
-    default_params.out='data_r11_trinity_v0'
+    default_params.rank=0
+    default_params.world_size=1
+    default_params.out='fvs_weight'
     params=smartparse.parse(default_params);
     params.argv=sys.argv;
     

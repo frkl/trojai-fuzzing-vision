@@ -5,6 +5,22 @@ import torch
 import json
 from collections import OrderedDict
 
+def find(s,root='sessions'):
+    folders=os.listdir(root)
+    folders=sorted(folders)
+    results=[];
+    for folder in folders:
+        try:
+            f=open(os.path.join(root,folder,'params.json'),'r');
+            params=json.load(f)
+            v=json.dumps(params)
+            if v.find(s)>=0:
+                results.append({'session':folder,'params':params})
+        except:
+            pass
+    
+    return results;
+
 
 def create_session(params):
     try:
