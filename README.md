@@ -44,7 +44,7 @@ python run.py --detector sessions/0000000/model.pt --model ../trojai-datasets/ob
 
 # Hacking
 
-Write your own `helper_r13_v0.py` to load your models. This includes a `def root()` function that returns where training data is located, and a `class engine` that loads the model weights.
+Write your own `helper_r13_v0.py` to load your models. This includes a `def root()` function that returns where training data is located. `os.path.join(helper.root(),'models')` will be where `trinity.py` find training models for feature extraction by default. Define a `class engine` that loads the model weights. Update the `import helper_r13_v0 as helper` imports in `trinity.py` and `run.py`
 
 `trinity.py` has utilities for feature extraction and running a detector ensemble.
 
