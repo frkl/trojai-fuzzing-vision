@@ -17,6 +17,15 @@ In this post, we'll walk through 1) a first principle derivation of the design o
 
 ## From the ground up
 
+Our general approach here is to 
+
+
+
+As a general rule of thumb, enforcing symmetry on a neural network induces parameter sharing.
+
+
+### The intuition
+
 Let's start from a simple 1-D permutation invariance case. Let's say we want to parameterize a function  
 ```math
 y=f\left( \begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix} \right)
@@ -55,8 +64,6 @@ That is
 \end{aligned}
 ```
 
-
-
 ```math 
 \begin{aligned}
 +
@@ -80,10 +87,51 @@ That is
 + \ldots =0
 \end{aligned}
 ```
+
+For this to be true for any $x$, the first order and second order coefficients need to satisfy for any permutation $P$
+
+```math
+\begin{aligned}
+\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}
+-\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}P \right)
+=0
+\end{aligned}
+```
+and 
+
+```math
+\begin{aligned}
+\begin{bmatrix} 
+    c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
+    c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
+    c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
+    c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
+\end{bmatrix} 
+-P^{T}
+\begin{bmatrix} 
+    c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
+    c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
+    c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
+    c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
+\end{bmatrix} P
+=0
+\end{aligned}
+```
+
+Here for every $P$ we have an equation about coefficients $c$, and across all $P$ we have a set of equations in the form of $A\hat{c}=0$. Finding the null space of $A$ would give us the degrees of freedom that the coefficients $c$ can have. That's the key idea behind https://proceedings.mlr.press/v139/finzi21a/finzi21a.pdf and interested readers can read further.
+
+For our specific case, in the first-order term, obviously we have $c^{(1)}_{0}=c^{(1)}_{1}=c^{(1)}_{2}=c^{(1)}_{3}\triangleq b$. In other words, there's only 1 degree of freedom. The second term turned out to have 2 degrees of freedom 
+
+```math
+\begin{aligned}
+c^{(2)}_{ii}\triangleq c
+c^{(2)}_{ij}\triangleq d, i\nej
+\end{aligned}
+```
+
  
 
 
-As a general rule of thumb, enforcing symmetry on a neural network induces parameter sharing.
 
 
 ## Use cases
