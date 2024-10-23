@@ -16,6 +16,9 @@ Obviously, if the einsum operations were picked to follow the desired symmetry, 
 In this post, we'll walk through 1) a first principle derivation of the design of the network starting from the Taylor series of nD permutation symmetric functions requiring little math, and 2) from scratch implementations on several toy problems, including matrix inverse and knowledge graph completion using an ARC-AGI challenge case as an example.
 
 ## From the ground up
+
+Let's start from a function $F(\begin{bmatrix}x_{00} & x_{01}\\x_{10} & x_{11}\end{bmatrix})$
+
 As a general rule of thumb, enforcing symmetry on a neural network induces parameter sharing.
 
 
@@ -33,7 +36,7 @@ class einpool_ab(nn.Module):
 	Kin=17
 	Kout=7
 	def forward(self,x):
-		N,M,KH=x.shape
+		N,M,KH=x.shape[-3:]
 		H=KH//17
 		x=x.split(H,dim=-1)
 		y0=x[0]
@@ -65,8 +68,7 @@ class einnet(nn.Module):
 	def forward(self,x):
 		h=self.t[0](x)
 		for i in range(1,len(self.t)):
-			hi=F.softmax(h.view(-1,h.shape[-1]),dim=0).view(*h.shape)
-			#hi=F.normalize(h.view(-1,h.shape[-1]),p=2,dim=0,eps=1e-3).view(*h.shape)**2
+			hi=F.softmax(h.view(*h.shape[:-3],-1,h.shape[-1]),dim=-2).view(*h.shape)
 			hi=self.t[i](self.pool(hi))
 			if i<len(self.t)-1:
 				h=h+hi
@@ -171,7 +173,7 @@ class einpool_aa(nn.Module):
 	Kin=8
 	Kout=7
 	def forward(self,x):
-		N,M,KH=x.shape
+		N,M,KH=x.shape[-3:]
 		H=KH//8
 		x=x.split(H,dim=-1)
 		y0=x[0]
@@ -185,7 +187,7 @@ class einpool_aa(nn.Module):
 		return y
 
 
-net=einnet(ninput=len(relations),nh0=8,nh=32,noutput=len(relations),nstacks=12,pool=einpool_aa()).cuda()
+net=einnet(ninput=len(relations),nh0=32,nh=128,noutput=len(relations),nstacks=6,pool=einpool_aa()).cuda()
 ```
 
 Start training
@@ -211,39 +213,41 @@ splits=powerset(list(range(len(Y_train))))
 import random
 
 def divide(X):
-	missing=torch.rand_like(X).gt(0.95).float()
-	X_=X.data*missing
-	Y_=X.data*(1-missing)
+	missing=torch.rand_like(X).gt(0.90).to(X.dtype)
+	X_=X.data*(1-missing)
+	Y_=X.data*missing
 	return X_,Y_
-	
 
-opt=torch.optim.AdamW(net.parameters(),lr=3e-3,weight_decay=0)
+
+opt=torch.optim.AdamW(net.parameters(),lr=1e-3,weight_decay=0)
+
+loss=[]
 for i in range(100000):
 	net.zero_grad()
-	loss=[]
-	for j in range(len(splits)):
-		#ind=splits[j]
-		#Y=torch.stack([Y_train[k] for k in ind],dim=0).sum(dim=0)
+	for j in range(3):
+		ind=splits[j%len(splits)]
+		Y=torch.stack([Y_train[k] for k in ind],dim=0).sum(dim=0)
 		#loss_j,_,_=forward(X-Y,Y)
-		X_,Y_=divide(X)
-		loss_j,_,_=forward(X_,Y_)
+		X_,Y_=divide(X-Y)
+		loss_j,_,_=forward(X_,Y)
 		loss_j.backward()
 		loss.append(float(loss_j.data))
 	
 	opt.step()
-	loss=sum(loss)/len(loss)
-	print('iter %d, loss %f   '%(i,loss),end='\r')
+	loss_i=sum(loss)/len(loss)
+	print('iter %d, loss %f   '%(i,loss_i),end='\r')
 	
 	if i%1000==0:
 		with torch.no_grad():
 			for j in range(len(Y_train)):
 				loss_eval,pred,acc=forward(X-Y_train[j],Y_train[j])
-				print('iter %d, loss %f, loss_tr %f, acc %f,   '%(i,loss,loss_eval,acc))
+				print('iter %d, loss %f, loss_tr %f, acc %f,   '%(i,loss_i,loss_eval,acc))
 				print(pred.view(-1).tolist())
 			
 			loss_eval,pred,acc=forward(X,Y_test)
-			print('iter %d, loss %f, loss_eval %f, acc %f,   '%(i,loss,loss_eval,acc))
+			print('iter %d, loss %f, loss_eval %f, acc %f,   '%(i,loss_i,loss_eval,acc))
 			print(pred.view(-1).tolist())
+			loss=[]
 
 
 with torch.no_grad():
