@@ -19,12 +19,12 @@ In this post, we'll walk through 1) a first principle derivation of the design o
 
 Let's start from a simple 1-D permutation invariance case. Let's say we want to parameterize a function  
 ```math
-y=f(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix})
+y=f\left( \begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix} \right)
 ```
 to be invariant to permutation. Consider the Taylor series
 ```math
 \begin{aligned}
-f(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix})
+f\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
 = & c^{(0)} + 
 \begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix} 
 \begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix} \\ 
@@ -43,7 +43,7 @@ f(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix})
 
 Since we want $f(\cdot)$ to be invariant to any permutation $P$, by definition we have 
 ```math
-f(\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix})-f(P\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix})=0
+f\left(\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix})-f\left(P\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}\right)=0
 ```
 That is 
 ```math
@@ -51,7 +51,14 @@ That is
 c^{(0)} - c^{(0)} + 
 (\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}
 -\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}P)
-\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix} \\ 
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix} \\
+\end{aligned}
+```
+
+
+
+```math 
+\begin{aligned}
 +
 \begin{bmatrix} x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}
 (
