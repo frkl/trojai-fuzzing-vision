@@ -41,7 +41,7 @@ f(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix})
 \end{aligned}
 ```
 
-Since we want $f(\cdot)$ to be invariant to any permutation $P$, we have 
+Since we want $f(\cdot)$ to be invariant to any permutation $P$, by definition we have 
 ```math
 f(\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix})-f(P\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix})=0
 ```
@@ -61,7 +61,7 @@ c^{(0)} - c^{(0)} +
     c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
     c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
 \end{bmatrix} 
--P^T
+-P^{T}
 \begin{bmatrix} 
     c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
     c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
