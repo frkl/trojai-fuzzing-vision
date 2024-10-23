@@ -143,10 +143,10 @@ f\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
 +
 \begin{bmatrix} x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}
 \begin{bmatrix} 
-    \textcolor{cyan}{c} & \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{green}{d} \\
-    \textcolor{green}{d} & \textcolor{cyan}{c} & \textcolor{green}{d} & \textcolor{green}{d} \\
-    \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{cyan}{c} & \textcolor{green}{d} \\
-    \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{cyan}{c} 
+    \textcolor{blue}{c} & \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{green}{d} \\
+    \textcolor{green}{d} & \textcolor{blue}{c} & \textcolor{green}{d} & \textcolor{green}{d} \\
+    \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{blue}{c} & \textcolor{green}{d} \\
+    \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{blue}{c} 
 \end{bmatrix} 
 \begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
 + \ldots
@@ -157,15 +157,15 @@ Now, let's take a parameter-centric view and pool inputs to the parameters
 \begin{aligned}
 f\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
 = & \textcolor{red}{a}
-+\textcolor{orange}{b} \sum_{i} x_{i}
-+\textcolor{cyan}{c} \sum_{i} x_{ii}
-+\textcolor{green}{d} \sum_{i} \sum{j} x_{ij}
-- \textcolor{green}{d} \sum_{i} x_{ii}
++\textcolor{orange}{b} \sum_{i=0}^{3} x_{i}
++\textcolor{blue}{c} \sum_{i=0}^{3} x_{ii}
++\textcolor{green}{d} \sum_{i=0}^{3} \sum_{j=0}^{3} x_{ij}
+- \textcolor{green}{d} \sum_{i=0}^{3} x_{ii}
 +\dots \\
 = & \textcolor{red}{a}
-+\textcolor{orange}{b} \sum_{i} x_{i}
-+\textcolor{cyan}{c-d} \sum_{i} x_{ii}
-+\textcolor{green}{d} \sum_{i} \sum{j} x_{ij}
++\textcolor{orange}{b} \sum_{i=0}^{3} x_{i}
++\textcolor{blue}{(c-d)} \sum_{i=0}^{3} x_{ii}
++\textcolor{green}{d} \sum_{i=0}^{3} \sum_{j=0}^{3} x_{ij}
 +\dots
 \end{aligned}
 ```
