@@ -93,7 +93,7 @@ For this to be true for any $x$, the first order and second order coefficients n
 ```math
 \begin{aligned}
 \begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}
--\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}P \right)
+-\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}P 
 =0
 \end{aligned}
 ```
