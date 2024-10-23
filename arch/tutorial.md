@@ -165,13 +165,13 @@ f\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
 ```
 From this, it seems that we would be able to implement $f(\cdot)$ as a pooling layer followed by a linear layer. 
 
-Now you have learned the basics, try this method yourself on the following two cases:
+Now you have learned the basics, try this method yourself on the following problems:
 
 
 <details>
 
 <summary> 
-2D permutation invariance 
+2D permutation invariance, $2\times 2$ input 
 </summary>
 
 ```math
@@ -193,7 +193,7 @@ a
 <details>
 
 <summary> 
-1D permutation equivariance 
+1D permutation equivariance, $1\times 4$ input and output
 </summary>
 
 ```math
@@ -218,6 +218,32 @@ f_{i}
 \sum_{j=0}^{3} \sum_{k=0}^{3} x_{j} x_{k}
 
 +\dots
+\end{aligned}
+```
+
+</details>
+
+
+<summary> 
+1D permutation invariance with a non-equivariant latent dimension, $2\times 2$ input
+</summary>
+
+```math
+\begin{aligned}
+f\left(\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix}\right)
+= & a+ 
+\begin{bmatrix} b_0 & b_1 & b_0 & b_1\end{bmatrix} 
+\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11}\end{bmatrix}
++
+\begin{bmatrix} x_{00} & x_{01} & x_{10} & x_{11}\end{bmatrix}
+\begin{bmatrix} 
+    c_{00} & c_{01} & d_{00} & d_{01} \\
+    c_{10} & c_{11} & d_{10} & d_{11} \\
+    d_{00} & d_{01} & c_{00} & c_{01} \\
+    d_{10} & d_{11} & c_{10} & c_{11} 
+\end{bmatrix} 
+\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11}\end{bmatrix}
++ \ldots
 \end{aligned}
 ```
 
