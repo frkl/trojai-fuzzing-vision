@@ -169,8 +169,15 @@ Now you have learned the basics, try this method yourself on the following two c
 
 2D permutation invariance 
 <details>
-<summary> test </summary>
+
+<summary> 
+
+test 
+
+</summary>
+
 ![alt text](eqs.png)
+
 $$
 \begin{aligned}
 g\left(\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix}\right)
