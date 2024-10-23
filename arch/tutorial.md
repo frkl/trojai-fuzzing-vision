@@ -17,29 +17,59 @@ In this post, we'll walk through 1) a first principle derivation of the design o
 
 ## From the ground up
 
-Let's start from a simple case. Let's say we want to parameterize a scalar function  
+Let's start from a simple 1-D permutation invariance case. Let's say we want to parameterize a function  
 ```math
-y=f(\begin{bmatrix}x_{00} & x_{01}\\x_{10} & x_{11}\end{bmatrix})
+y=f(\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix})
 ```
-to be invariant to row-column permutation. Consider the Taylor series
+to be invariant to permutation. Consider the Taylor series
 ```math
-f(\begin{bmatrix}x_{00} & x_{01}\\x_{10} & x_{11}\end{bmatrix}) \\
+f(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}) \\
 = c^{(0)} + 
 \begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix} 
-\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11}\end{bmatrix} \\ 
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix} \\ 
 +
-\begin{bmatrix} x_{00} & x_{01} & x_{10} & x_{11}\end{bmatrix}
+\begin{bmatrix} x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}
 \begin{bmatrix} 
     c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
     c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
     c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
     c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
 \end{bmatrix} 
-\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11}\end{bmatrix}
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
 + \ldots
 ```
 
-For $f(\cdot)$ to stay the same against arbitrary permutations of $\vec{v} = \begin{bmatrix} X \\\ Y \end{bmatrix}$
+Since we want $f(\cdot)$ to be invariant to any permutation $P$, we have 
+```math
+f(\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix})-f(P\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}=0
+```
+That is 
+```math
+c^{(0)} - c^{(0)} + 
+(\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}
+-\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}P)
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix} \\ 
++
+\begin{bmatrix} x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}
+(
+\begin{bmatrix} 
+    c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
+    c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
+    c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
+    c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
+\end{bmatrix} 
+-P^T
+\begin{bmatrix} 
+    c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
+    c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
+    c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
+    c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
+\end{bmatrix} P
+)
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
++ \ldots =0
+```
+ 
 
 
 As a general rule of thumb, enforcing symmetry on a neural network induces parameter sharing.
