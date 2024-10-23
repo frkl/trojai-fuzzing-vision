@@ -168,7 +168,10 @@ From this, it seems that we would be able to implement $f(\cdot)$ as a pooling l
 Now you have learned the basics, try this method yourself on the following two cases:
 
 2D permutation invariance 
-```math
+<details>
+<summary> test </summary>
+
+$$
 \begin{aligned}
 g\left(\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix}\right)
 = &
@@ -180,9 +183,11 @@ a
 &+f \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} \sum_{l=0}^{1} x_{ij}  x_{kl}
 +\ldots
 \end{aligned}
-```
+$$
+</details>
 
 1D permutation equivariance 
+
 ```math
 \begin{aligned}
 F_i\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
