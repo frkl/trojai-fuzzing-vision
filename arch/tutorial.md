@@ -171,13 +171,13 @@ Now you have learned the basics, try this method yourself on the following two c
 ```math
 \begin{aligned}
 g\left(\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix}\right)
-&= 
+= &
 a
 +b \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}
 +c \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}  x_{ij}
 +d \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{ik}
-+e \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{kj}
-+f \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} \sum_{l=0}^{1} x_{ij}  x_{kl}
++e \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{kj} \\
+&+f \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} \sum_{l=0}^{1} x_{ij}  x_{kl}
 +\ldots
 \end{aligned}
 ```
@@ -193,13 +193,13 @@ b_{i}
 x_{i}
 + 
 c_{i}
-\begin{bmatrix} \sum_{j=0}^{3} x_{j} \end{bmatrix}
+\sum_{j=0}^{3} x_{j}
 +
 d_{i}
-x_{i} * x_{i}
+x_{i}^{2}
 + 
 e_{i}
-x_{i} * \sum_{j=0}^{3} x_{j}
+x_{i} \sum_{j=0}^{3} x_{j}
 + 
 f_{i}
 \sum_{j=0}^{3} \sum_{k=0}^{3} x_{j} x_{k}
