@@ -23,6 +23,7 @@ y=f(\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix})
 ```
 to be invariant to permutation. Consider the Taylor series
 ```math
+\begin{matrix}
 f(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}) \\
 = c^{(0)} + 
 \begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix} 
@@ -37,14 +38,16 @@ f(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}) \\
 \end{bmatrix} 
 \begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
 + \ldots
+\end{matrix}
 ```
 
 Since we want $f(\cdot)$ to be invariant to any permutation $P$, we have 
 ```math
-f(\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix})-f(P\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}=0
+f(\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix})-f(P\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix})=0
 ```
 That is 
 ```math
+\begin{matrix}
 c^{(0)} - c^{(0)} + 
 (\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}
 -\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}P)
@@ -68,6 +71,7 @@ c^{(0)} - c^{(0)} +
 )
 \begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
 + \ldots =0
+\end{matrix}
 ```
  
 
