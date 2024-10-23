@@ -48,18 +48,11 @@ f\left(\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}\right)-f\lef
 That is 
 ```math
 \begin{aligned}
-c^{(0)} - c^{(0)} + 
+& c^{(0)} - c^{(0)} + 
 \left(\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}
 -\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}P \right)
 \begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix} \\
-\end{aligned}
-```
-
-
-
-```math 
-\begin{aligned}
-+
+& +
 \begin{bmatrix} x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}
 \left(
 \begin{bmatrix} 
