@@ -138,15 +138,15 @@ So our permutation invariant function turned out to look like
 \begin{aligned}
 f\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
 = & \textcolor{red}{a}+ 
-\begin{bmatrix} \textcolor{yellow}{b} & \textcolor{yellow}{b} & \textcolor{yellow}{b} & \textcolor{yellow}{b}\end{bmatrix} 
+\begin{bmatrix} \textcolor{orange}{b} & \textcolor{orange}{b} & \textcolor{orange}{b} & \textcolor{orange}{b}\end{bmatrix} 
 \begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix} \\ 
 & +
 \begin{bmatrix} x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}
 \begin{bmatrix} 
-    \textcolor{cyan}{c} & \textcolor{purple}{d} & \textcolor{purple}{d} & \textcolor{purple}{d} \\
-    \textcolor{purple}{d} & \textcolor{cyan}{c} & \textcolor{purple}{d} & \textcolor{purple}{d} \\
-    \textcolor{purple}{d} & \textcolor{purple}{d} & \textcolor{cyan}{c} & \textcolor{purple}{d} \\
-    \textcolor{purple}{d} & \textcolor{purple}{d} & \textcolor{purple}{d} & \textcolor{cyan}{c} 
+    \textcolor{blue}{c} & \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{green}{d} \\
+    \textcolor{green}{d} & \textcolor{blue}{c} & \textcolor{green}{d} & \textcolor{green}{d} \\
+    \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{blue}{c} & \textcolor{green}{d} \\
+    \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{blue}{c} 
 \end{bmatrix} 
 \begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
 + \ldots
