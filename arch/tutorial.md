@@ -124,7 +124,7 @@ For our specific case, in the first-order term, obviously we have
 ```math
 c^{(1)}_{0}=c^{(1)}_{1}=c^{(1)}_{2}=c^{(1)}_{3}\triangleq b
 ```
-In other words, there's only 1 degree of freedom. The second term turned out to have 2 degrees of freedom 
+In other words, the first order term only has 1 degree of freedom. The second order term turned out to have 2 degrees of freedom 
 
 ```math
 \begin{aligned}
@@ -132,6 +132,28 @@ c^{(2)}_{ii}\triangleq c \\
 c^{(2)}_{ij}\triangleq d, i\ne j
 \end{aligned}
 ```
+
+So our permutation invariant function turned out to look like
+```math
+\begin{aligned}
+f\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
+= & \textcolor{red}{a}+ 
+\begin{bmatrix} \textcolor{yellow}{b} & \textcolor{yellow}{b} & \textcolor{yellow}{b} & \textcolor{yellow}{b}\end{bmatrix} 
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix} \\ 
+& +
+\begin{bmatrix} x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}
+\begin{bmatrix} 
+    \textcolor{cyan}{c} & \textcolor{purple}{d} & \textcolor{purple}{d} & \textcolor{purple}{d} \\
+    \textcolor{purple}{d} & \textcolor{cyan}{c} & \textcolor{purple}{d} & \textcolor{purple}{d} \\
+    \textcolor{purple}{d} & \textcolor{purple}{d} & \textcolor{cyan}{c} & \textcolor{purple}{d} \\
+    \textcolor{purple}{d} & \textcolor{purple}{d} & \textcolor{purple}{d} & \textcolor{cyan}{c} 
+\end{bmatrix} 
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
++ \ldots
+\end{aligned}
+```
+
+
 
  
 
