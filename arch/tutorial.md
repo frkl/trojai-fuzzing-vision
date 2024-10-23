@@ -171,9 +171,7 @@ Now you have learned the basics, try this method yourself on the following probl
 <details>
 
 <summary> 
-
 2D permutation invariance, 2x2 input 
-
 </summary>
 
 ```math
@@ -233,7 +231,7 @@ f_{i}
 
 ```math
 \begin{aligned}
-f\left(\begin{bmatrix} \begin{bmatrix}x_{00} \\ x_{01} \end{bmatrix} \\ \begin{bmatrix} x_{10} \\ x_{11} \end{bmatrix} \end{bmatrix} \right)
+f\left(\begin{bmatrix} x_{00} \\ x_{01}  \\  x_{10} \\ x_{11} \end{bmatrix} \right)
 = & a+ 
 \begin{bmatrix} b_0 & b_1 & b_0 & b_1\end{bmatrix} 
 \begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11}\end{bmatrix}
@@ -249,6 +247,8 @@ f\left(\begin{bmatrix} \begin{bmatrix}x_{00} \\ x_{01} \end{bmatrix} \\ \begin{b
 + \ldots
 \end{aligned}
 ```
+
+Modeling non-equivariant dimensions lead to $1x2$ parameter blocks in the first order term, and $2x2$ parameter blocks in the second order term. Parameter block size will grow exponentially with respect to order. 
 
 </details>
 
@@ -342,6 +342,17 @@ Process an ARC-AGI example into a knowledge graph.
 data_train=[{"input": [[8, 6], [6, 4]], "output": [[8, 6, 8, 6, 8, 6], [6, 4, 6, 4, 6, 4], [6, 8, 6, 8, 6, 8], [4, 6, 4, 6, 4, 6], [8, 6, 8, 6, 8, 6], [6, 4, 6, 4, 6, 4]]}, {"input": [[7, 9], [4, 3]], "output": [[7, 9, 7, 9, 7, 9], [4, 3, 4, 3, 4, 3], [9, 7, 9, 7, 9, 7], [3, 4, 3, 4, 3, 4], [7, 9, 7, 9, 7, 9], [4, 3, 4, 3, 4, 3]]}]
 data_test=[{"input": [[3, 2], [7, 8]], "output": [[3, 2, 3, 2, 3, 2], [7, 8, 7, 8, 7, 8], [2, 3, 2, 3, 2, 3], [8, 7, 8, 7, 8, 7], [3, 2, 3, 2, 3, 2], [7, 8, 7, 8, 7, 8]]}]
 
+data_train=[{"input": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 4], [1, 1, 0, 0, 0, 0, 0, 0, 0, 4], [1, 1, 0, 2, 2, 0, 3, 3, 0, 4], [1, 1, 0, 2, 2, 0, 3, 3, 0, 4]], "output": [[1, 1, 0, 0, 0, 0, 0, 0, 0, 0], [1, 1, 0, 0, 0, 0, 0, 0, 0, 0], [1, 2, 2, 0, 0, 0, 0, 0, 0, 0], [0, 2, 3, 3, 0, 0, 0, 0, 0, 0], [0, 0, 3, 4, 0, 0, 0, 0, 0, 0], [0, 0, 0, 4, 0, 0, 0, 0, 0, 0], [0, 0, 0, 4, 0, 0, 0, 0, 0, 0], [0, 0, 0, 4, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]}, {"input": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [8, 8, 8, 0, 0, 0, 0, 0, 0, 0], [8, 8, 8, 0, 0, 0, 0, 0, 0, 0], [8, 8, 8, 0, 7, 7, 0, 2, 2, 2], [8, 8, 8, 0, 7, 7, 0, 2, 2, 2]], "output": [[8, 8, 8, 0, 0, 0, 0, 0, 0, 0], [8, 8, 8, 0, 0, 0, 0, 0, 0, 0], [8, 8, 8, 0, 0, 0, 0, 0, 0, 0], [8, 8, 7, 7, 0, 0, 0, 0, 0, 0], [0, 0, 7, 2, 2, 2, 0, 0, 0, 0], [0, 0, 0, 2, 2, 2, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]}, {"input": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 2, 0, 0, 0, 0], [0, 0, 0, 0, 0, 2, 0, 0, 0, 0], [0, 0, 0, 0, 0, 2, 0, 3, 3, 3], [4, 4, 4, 4, 0, 2, 0, 3, 3, 3], [4, 4, 4, 4, 0, 2, 0, 3, 3, 3]], "output": [[4, 4, 4, 4, 0, 0, 0, 0, 0, 0], [4, 4, 4, 2, 0, 0, 0, 0, 0, 0], [0, 0, 0, 2, 0, 0, 0, 0, 0, 0], [0, 0, 0, 2, 0, 0, 0, 0, 0, 0], [0, 0, 0, 2, 0, 0, 0, 0, 0, 0], [0, 0, 0, 3, 3, 3, 0, 0, 0, 0], [0, 0, 0, 3, 3, 3, 0, 0, 0, 0], [0, 0, 0, 3, 3, 3, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]}] 
+
+data_test=[{"input": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [7, 0, 0, 0, 0, 0, 0, 0, 0, 0], [7, 0, 8, 8, 0, 6, 0, 0, 0, 0], [7, 0, 8, 8, 0, 6, 0, 3, 3, 0], [7, 0, 8, 8, 0, 6, 0, 3, 3, 0]], "output": [[7, 0, 0, 0, 0, 0, 0, 0, 0, 0], [7, 0, 0, 0, 0, 0, 0, 0, 0, 0], [7, 0, 0, 0, 0, 0, 0, 0, 0, 0], [8, 8, 0, 0, 0, 0, 0, 0, 0, 0], [8, 8, 0, 0, 0, 0, 0, 0, 0, 0], [8, 6, 0, 0, 0, 0, 0, 0, 0, 0], [0, 6, 0, 0, 0, 0, 0, 0, 0, 0], [0, 3, 3, 0, 0, 0, 0, 0, 0, 0], [0, 3, 3, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]}]
+
+sz=[max(torch.Tensor(x['input']).shape) for x in data_train]
+sz+=[max(torch.Tensor(x['output']).shape) for x in data_train]
+sz+=[max(torch.Tensor(x['input']).shape) for x in data_test]
+sz+=[max(torch.Tensor(x['output']).shape) for x in data_test]
+sz=max(sz)
+
+
 #Describe KG into grid
 def describe(input,output,ex_name='example'):
     links=[]
@@ -372,25 +383,30 @@ def describe(input,output,ex_name='example'):
 Split data into train/test splits
 ```python
 #Divide links into train_input, train_output, test_output
-links_seen=[]
+links_train_input=[]
 links_train_output=[]
-links_test=[]
-for i in range(5):
-	links_seen.append(['num_%d'%(i),'less_than','num_%d'%(i+1)])
+links_test_input=[]
+links_test_output=[]
 
+basic_links=[]
+for i in range(sz-1):
+	basic_links.append(['num_%d'%(i),'less_than','num_%d'%(i+1)])
+
+import copy
+all_links=copy.deepcopy(basic_links)
 for i,ex in enumerate(data_train):
 	links_i,links_test_i=describe(ex['input'],ex['output'],'train_%d'%i)
-	links_seen+=links_i
-	links_seen+=links_test_i
+	links_train_input.append(basic_links+links_i)
 	links_train_output.append(links_test_i)
+	all_links=all_links+links_i+links_test_i
 
 for i,ex in enumerate(data_test):
 	links_i,links_test_i=describe(ex['input'],ex['output'],'test_%d'%i)
-	links_seen+=links_i
-	links_test+=links_test_i
+	links_test_input.append(basic_links+links_i)
+	links_test_output.append(links_test_i)
+	all_links=all_links+links_i+links_test_i
 
 #Create entity/relation dictionaries
-all_links=links_seen+links_test
 entities=sorted(list(set([x[0] for x in all_links]+[x[2] for x in all_links])))
 relations=sorted(list(set([x[1] for x in all_links])))
 
@@ -399,9 +415,26 @@ def tuple_to_tensor(links,entities,relations):
 	X=torch.sparse_coo_tensor(data.t(),[1.0 for i in data],[len(entities),len(entities),len(relations)])
 	return X.coalesce().to_dense()
 
-X=tuple_to_tensor(links_seen,entities,relations).cuda()
-Y_train=[tuple_to_tensor(links,entities,relations).cuda() for links in links_train_output]
-Y_test=tuple_to_tensor(links_test,entities,relations).cuda()
+def tuple_to_tensor2(links,links_test):
+	all_links=links+links_test
+	entities=sorted(list(set([x[0] for x in all_links]+[x[2] for x in all_links])))
+	relations=sorted(list(set([x[1] for x in all_links])))
+	print(len(entities),len(relations))
+	return tuple_to_tensor(links,entities,relations).cuda(),tuple_to_tensor(links_test,entities,relations).cuda(),
+
+X_train=[]
+Y_train=[]
+for i in range(len(links_train_input)):
+	x,y=tuple_to_tensor2(links_train_input[i],links_train_output[i])
+	X_train.append(x)
+	Y_train.append(y)
+
+X_test=[]
+Y_test=[]
+for i in range(len(links_test_input)):
+	x,y=tuple_to_tensor2(links_test_input[i],links_test_output[i])
+	X_test.append(x)
+	Y_test.append(y)
 
 ```
 
@@ -426,7 +459,7 @@ class einpool_aa(nn.Module):
 		return y
 
 
-net=einnet(ninput=len(relations),nh0=32,nh=128,noutput=len(relations),nstacks=6,pool=einpool_aa()).cuda()
+net=einnet(ninput=len(relations),nh0=8,nh=32,noutput=len(relations),nstacks=6,pool=einpool_aa()).cuda()
 ```
 
 Start training
@@ -441,16 +474,7 @@ def forward(X,Y):
 	acc=pred.eq(ind[:,1]).float().mean()
 	return loss,pred,acc
 
-def powerset(x):
-	if len(x)==1:
-		return [x]
-	
-	s=powerset(x[:-1])
-	return s+[[x[-1]]]+[v+[x[-1]] for v in s]
-
-splits=powerset(list(range(len(Y_train))))
 import random
-
 def divide(X):
 	missing=torch.rand_like(X).gt(0.90).to(X.dtype)
 	X_=X.data*(1-missing)
@@ -463,12 +487,9 @@ opt=torch.optim.AdamW(net.parameters(),lr=1e-3,weight_decay=0)
 loss=[]
 for i in range(100000):
 	net.zero_grad()
-	for j in range(10):
-		ind=splits[j%len(splits)]
-		Y=torch.stack([Y_train[k] for k in ind],dim=0).sum(dim=0)
-		#loss_j,_,_=forward(X-Y,Y)
-		X_,Y_=divide(X-Y)
-		loss_j,_,_=forward(X_,Y)
+	for j in range(len(X_train)):
+		X_,Y_=divide(X_train[j])
+		loss_j,_,_=forward(X_,Y_train[j])
 		loss_j.backward()
 		loss.append(float(loss_j.data))
 	
@@ -478,15 +499,20 @@ for i in range(100000):
 	
 	if i%1000==0:
 		with torch.no_grad():
-			for j in range(len(Y_train)):
-				loss_eval,pred,acc=forward(X-Y_train[j],Y_train[j])
+			for j in range(len(X_train)):
+				loss_eval,pred,acc=forward(X_train[j],Y_train[j])
 				print('iter %d, loss %f, loss_tr %f, acc %f,   '%(i,loss_i,loss_eval,acc))
 				print(pred.view(-1).tolist())
 			
-			loss_eval,pred,acc=forward(X,Y_test)
-			print('iter %d, loss %f, loss_eval %f, acc %f,   '%(i,loss_i,loss_eval,acc))
-			print(pred.view(-1).tolist())
+			for j in range(len(X_test)):
+				loss_eval,pred,acc=forward(X_test[j],Y_test[j])
+				print('iter %d, loss %f, loss_eval %f, acc %f,   '%(i,loss_i,loss_eval,acc))
+				print(pred.view(-1).tolist())
+			
 			loss=[]
+
+
+
 
 
 with torch.no_grad():
