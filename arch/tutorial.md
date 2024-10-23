@@ -171,7 +171,9 @@ Now you have learned the basics, try this method yourself on the following probl
 <details>
 
 <summary> 
-2D permutation invariance, $2\times 2$ input 
+
+2D permutation invariance, 2x2 input 
+
 </summary>
 
 ```math
@@ -193,7 +195,7 @@ a
 <details>
 
 <summary> 
-1D permutation equivariance, $1\times 4$ input and output
+1D permutation equivariance, 1x4 input and output
 </summary>
 
 ```math
@@ -226,11 +228,12 @@ f_{i}
 <details>
 
 <summary> 
-1D permutation invariance with a non-equivariant latent dimension, $2\times 2$ input
+1D permutation invariance with a non-equivariant latent dimension, 2x2 input
 </summary>
 
 ```math
 \begin{aligned}
+f\left(\begin{bmatrix} \begin{bmatrix}x_{00} \\ x_{01} \end{bmatrix} \\ \begin{bmatrix} x_{10} \\ x_{11} \end{bmatrix} \end{bmatrix} \right)
 = & a+ 
 \begin{bmatrix} b_0 & b_1 & b_0 & b_1\end{bmatrix} 
 \begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11}\end{bmatrix}
@@ -252,7 +255,6 @@ f_{i}
 
 
 
-f\left(\begin{bmatrix} \begin{bmatrix}x_{00} \\ x_{01} \end{bmatrix} \\ \begin{bmatrix} x_{10} \\ x_{11} \end{bmatrix} \end{bmatrix} \right)
 
  
 
