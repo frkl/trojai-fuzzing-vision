@@ -17,7 +17,10 @@ In this post, we'll walk through 1) a first principle derivation of the design o
 
 ## From the ground up
 
-Let's start from a function $F(\begin{bmatrix}x_{00} & x_{01}\\x_{10} & x_{11}\end{bmatrix})$
+Let's start from a function 
+```math
+$F(\begin{bmatrix}x_{00} & x_{01}\\x_{10} & x_{11}\end{bmatrix})$
+```
 
 As a general rule of thumb, enforcing symmetry on a neural network induces parameter sharing.
 
