@@ -133,25 +133,44 @@ c^{(2)}_{ij}\triangleq d, i\ne j
 \end{aligned}
 ```
 
-So our permutation invariant function turned out to look like
+So our permutation invariant function turned out to be
 ```math
 \begin{aligned}
 f\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
 = & \textcolor{red}{a}+ 
 \begin{bmatrix} \textcolor{orange}{b} & \textcolor{orange}{b} & \textcolor{orange}{b} & \textcolor{orange}{b}\end{bmatrix} 
-\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix} \\ 
-& +
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
++
 \begin{bmatrix} x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}
 \begin{bmatrix} 
-    \textcolor{blue}{c} & \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{green}{d} \\
-    \textcolor{green}{d} & \textcolor{blue}{c} & \textcolor{green}{d} & \textcolor{green}{d} \\
-    \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{blue}{c} & \textcolor{green}{d} \\
-    \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{blue}{c} 
+    \textcolor{cyan}{c} & \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{green}{d} \\
+    \textcolor{green}{d} & \textcolor{cyan}{c} & \textcolor{green}{d} & \textcolor{green}{d} \\
+    \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{cyan}{c} & \textcolor{green}{d} \\
+    \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{cyan}{c} 
 \end{bmatrix} 
 \begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
 + \ldots
 \end{aligned}
 ```
+Now, let's take a parameter-centric view and pool inputs to the parameters
+```math
+\begin{aligned}
+f\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
+= & \textcolor{red}{a}
++\textcolor{orange}{b} \sum_{i} x_{i}
++\textcolor{cyan}{c} \sum_{i} x_{ii}
++\textcolor{green}{d} \sum_{i} \sum{j} x_{ij}
+- \textcolor{green}{d} \sum_{i} x_{ii}
++\dots \\
+= & \textcolor{red}{a}
++\textcolor{orange}{b} \sum_{i} x_{i}
++\textcolor{cyan}{c-d} \sum_{i} x_{ii}
++\textcolor{green}{d} \sum_{i} \sum{j} x_{ij}
++\dots
+\end{aligned}
+```
+
+
 
 
 
