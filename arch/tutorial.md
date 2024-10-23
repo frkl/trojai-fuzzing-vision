@@ -231,7 +231,6 @@ f_{i}
 
 ```math
 \begin{aligned}
-f\left(\begin{bmatrix} \begin{bmatrix}x_{00} \\ x_{01} \end{bmatrix} \\ \begin{bmatrix} x_{10} \\ x_{11} \end{bmatrix} \end{bmatrix}\right)
 = & a+ 
 \begin{bmatrix} b_0 & b_1 & b_0 & b_1\end{bmatrix} 
 \begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11}\end{bmatrix}
@@ -253,6 +252,7 @@ f\left(\begin{bmatrix} \begin{bmatrix}x_{00} \\ x_{01} \end{bmatrix} \\ \begin{b
 
 
 
+f\left(\begin{bmatrix} \begin{bmatrix}x_{00} \\ x_{01} \end{bmatrix} \\ \begin{bmatrix} x_{10} \\ x_{11} \end{bmatrix} \end{bmatrix} \right)
 
  
 
