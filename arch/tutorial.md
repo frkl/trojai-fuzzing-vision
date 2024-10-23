@@ -26,7 +26,8 @@ to be invariant to row-column permutation. Consider the Taylor series
 f(\begin{bmatrix}x_{00} & x_{01}\\x_{10} & x_{11}\end{bmatrix}) \\
 = c^{(0)} + 
 \begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix} 
-\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11}\end{bmatrix} +
+\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11}\end{bmatrix} \\ 
++
 \begin{bmatrix} x_{00} & x_{01} & x_{10} & x_{11}\end{bmatrix}
 \begin{bmatrix} 
     c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
@@ -35,7 +36,11 @@ f(\begin{bmatrix}x_{00} & x_{01}\\x_{10} & x_{11}\end{bmatrix}) \\
     c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
 \end{bmatrix} 
 \begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11}\end{bmatrix}
++ \ldots
 ```
+
+For $f(\cdot)$ to stay the same against arbitrary permutations of $\vec{v} = \begin{bmatrix} X \\\ Y \end{bmatrix}$
+
 
 As a general rule of thumb, enforcing symmetry on a neural network induces parameter sharing.
 
