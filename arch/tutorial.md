@@ -122,14 +122,14 @@ Here for every $P$ we have an equation about coefficients $c$, and across all $P
 
 For our specific case, in the first-order term, obviously we have
 ```math
-c^{(1)}_{0}=c^{(1)}_{1}=c^{(1)}_{2}=c^{(1)}_{3}\triangleq b
+c^{(1)}_{0}=c^{(1)}_{1}=c^{(1)}_{2}=c^{(1)}_{3}\triangleq \textcolor{orange}{b}
 ```
 In other words, the first order term only has 1 degree of freedom. The second order term turned out to have 2 degrees of freedom 
 
 ```math
 \begin{aligned}
-c^{(2)}_{ii}\triangleq c \\
-c^{(2)}_{ij}\triangleq d, i\ne j
+c^{(2)}_{ii}\triangleq \textcolor{blue}{c} \\
+c^{(2)}_{ij}\triangleq \textcolor{green}{d}, i\ne j
 \end{aligned}
 ```
 
@@ -156,19 +156,62 @@ Now, let's take a parameter-centric view and pool inputs to the parameters
 ```math
 \begin{aligned}
 f\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
-= & \textcolor{red}{a}
+&=  \textcolor{red}{a}
 +\textcolor{orange}{b} \sum_{i=0}^{3} x_{i}
-+\textcolor{blue}{c} \sum_{i=0}^{3} x_{ii}
-+\textcolor{green}{d} \sum_{i=0}^{3} \sum_{j=0}^{3} x_{ij}
-- \textcolor{green}{d} \sum_{i=0}^{3} x_{ii}
-+\dots \\
-= & \textcolor{red}{a}
-+\textcolor{orange}{b} \sum_{i=0}^{3} x_{i}
-+\textcolor{blue}{(c-d)} \sum_{i=0}^{3} x_{ii}
-+\textcolor{green}{d} \sum_{i=0}^{3} \sum_{j=0}^{3} x_{ij}
++\textcolor{blue}{(c-d)} \sum_{i=0}^{3} x_{i} x_{i}
++\textcolor{green}{d} \sum_{i=0}^{3} \sum_{j=0}^{3} x_{i} x_{j}
++\ldots
+\end{aligned}
+```
+From this, it seems that we would be able to implement $f(\cdot)$ as a pooling layer followed by a linear layer. 
+
+Now you have learned the basics, try this method yourself on the following two cases:
+
+<details> 
+<summary>2D permutation invariance </summary>
+```math
+\begin{aligned}
+g\left(\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix}\right)
+&= 
+a
++b \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}
++c \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}  x_{ij}
++d \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{ik}
++e \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{kj}
++f \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} \sum_{l=0}^{1} x_{ij}  x_{kl}
++\ldots
+\end{aligned}
+```
+</details>
+
+<details> 
+<summary>1D permutation equivariance </summary>
+```math
+\begin{aligned}
+F_i\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
+&=
+a_{i} 
++ 
+b_{i}
+x_{i}
++ 
+c_{i}
+\begin{bmatrix} \sum_{j=0}^{3} x_{j} \end{bmatrix}
++
+d_{i}
+x_{i} * x_{i}
++ 
+e_{i}
+x_{i} * \sum_{j=0}^{3} x_{j}
++ 
+f_{i}
+\sum_{j=0}^{3} \sum_{k=0}^{3} x_{j} x_{k}
+
 +\dots
 \end{aligned}
 ```
+</details>
+
 
 
 
@@ -381,7 +424,7 @@ opt=torch.optim.AdamW(net.parameters(),lr=1e-3,weight_decay=0)
 loss=[]
 for i in range(100000):
 	net.zero_grad()
-	for j in range(3):
+	for j in range(10):
 		ind=splits[j%len(splits)]
 		Y=torch.stack([Y_train[k] for k in ind],dim=0).sum(dim=0)
 		#loss_j,_,_=forward(X-Y,Y)
