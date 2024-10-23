@@ -167,14 +167,12 @@ From this, it seems that we would be able to implement $f(\cdot)$ as a pooling l
 
 Now you have learned the basics, try this method yourself on the following two cases:
 
-2D permutation invariance 
+
 <details>
 
 <summary> 
-test 
+2D permutation invariance 
 </summary>
-
-![alt text](eqs.png)
 
 ```math
 \begin{aligned}
@@ -192,7 +190,11 @@ a
 
 </details>
 
+<details>
+
+<summary> 
 1D permutation equivariance 
+</summary>
 
 ```math
 \begin{aligned}
@@ -219,6 +221,7 @@ f_{i}
 \end{aligned}
 ```
 
+</details>
 
 
 
