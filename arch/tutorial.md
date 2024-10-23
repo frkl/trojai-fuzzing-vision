@@ -43,7 +43,7 @@ f\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
 
 Since we want $f(\cdot)$ to be invariant to any permutation $P$, by definition we have 
 ```math
-f\left(\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix})-f\left(P\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}\right)=0
+f\left(\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}\right)-f\left(P\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}\right)=0
 ```
 That is 
 ```math
