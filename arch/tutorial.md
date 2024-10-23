@@ -88,7 +88,7 @@ That is
 \end{aligned}
 ```
 
-For this to be true for any $x$, the first order and second order coefficients need to satisfy for any permutation $P$
+For this to be true for any $x$, the first order and second order coefficients need to independently satisfy for any permutation $P$, that
 
 ```math
 \begin{aligned}
@@ -118,14 +118,18 @@ and
 \end{aligned}
 ```
 
-Here for every $P$ we have an equation about coefficients $c$, and across all $P$ we have a set of equations in the form of $A\hat{c}=0$. Finding the null space of $A$ would give us the degrees of freedom that the coefficients $c$ can have. That's the key idea behind https://proceedings.mlr.press/v139/finzi21a/finzi21a.pdf and interested readers can read further.
+Here for every $P$ we have an equation about coefficients $c$, and across all $P$ we have a set of equations in the form of $A\overrightarrow{c}=0$. Finding the null space of $A$ would give us the degrees of freedom that the coefficients $c$ can have. That's the key idea behind https://proceedings.mlr.press/v139/finzi21a/finzi21a.pdf and interested readers can read further.
 
-For our specific case, in the first-order term, obviously we have $c^{(1)}_{0}=c^{(1)}_{1}=c^{(1)}_{2}=c^{(1)}_{3}\triangleq b$. In other words, there's only 1 degree of freedom. The second term turned out to have 2 degrees of freedom 
+For our specific case, in the first-order term, obviously we have
+```math
+c^{(1)}_{0}=c^{(1)}_{1}=c^{(1)}_{2}=c^{(1)}_{3}\triangleq b
+```
+In other words, there's only 1 degree of freedom. The second term turned out to have 2 degrees of freedom 
 
 ```math
 \begin{aligned}
-c^{(2)}_{ii}\triangleq c
-c^{(2)}_{ij}\triangleq d, i\nej
+c^{(2)}_{ii}\triangleq c \\
+c^{(2)}_{ij}\triangleq d, i\ne j
 \end{aligned}
 ```
 
