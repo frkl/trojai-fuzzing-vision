@@ -17,9 +17,24 @@ In this post, we'll walk through 1) a first principle derivation of the design o
 
 ## From the ground up
 
-Let's start from a function 
+Let's start from a simple case. Let's say we want to parameterize a scalar function  
 ```math
-$F(\begin{bmatrix}x_{00} & x_{01}\\x_{10} & x_{11}\end{bmatrix})$
+y=f(\begin{bmatrix}x_{00} & x_{01}\\x_{10} & x_{11}\end{bmatrix})
+```
+to be invariant to row-column permutation. Consider the Taylor series
+```math
+f(\begin{bmatrix}x_{00} & x_{01}\\x_{10} & x_{11}\end{bmatrix}) \\
+= c^{(0)} + 
+\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix} 
+\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11}\end{bmatrix} +
+\begin{bmatrix} x_{00} & x_{01} & x_{10} & x_{11}\end{bmatrix}
+\begin{bmatrix} 
+    c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
+    c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
+    c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
+    c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
+\end{bmatrix} 
+\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11}\end{bmatrix}
 ```
 
 As a general rule of thumb, enforcing symmetry on a neural network induces parameter sharing.
