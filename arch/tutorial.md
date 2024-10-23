@@ -49,8 +49,8 @@ That is
 ```math
 \begin{aligned}
 c^{(0)} - c^{(0)} + 
-(\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}
--\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}P)
+\left(\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}
+-\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}P \right)
 \begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix} \\
 \end{aligned}
 ```
@@ -61,7 +61,7 @@ c^{(0)} - c^{(0)} +
 \begin{aligned}
 +
 \begin{bmatrix} x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}
-(
+\left(
 \begin{bmatrix} 
     c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
     c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
@@ -75,7 +75,7 @@ c^{(0)} - c^{(0)} +
     c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
     c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
 \end{bmatrix} P
-)
+\right)
 \begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
 + \ldots =0
 \end{aligned}
