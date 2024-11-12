@@ -17,12 +17,248 @@ In this post, we'll walk through 1) a first principle derivation of the design o
 
 ## From the ground up
 
-Let's start from a function 
-```math
-$F(\begin{bmatrix}x_{00} & x_{01}\\x_{10} & x_{11}\end{bmatrix})$
-```
+Our general approach here is to 
+
+
 
 As a general rule of thumb, enforcing symmetry on a neural network induces parameter sharing.
+
+
+### The intuition
+
+Let's start from a simple 1-D permutation invariance case. Let's say we want to parameterize a function  
+```math
+y=f\left( \begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix} \right)
+```
+to be invariant to permutation. Consider the Taylor series
+```math
+\begin{aligned}
+f\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
+= & c^{(0)} + 
+\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix} 
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix} \\ 
+& +
+\begin{bmatrix} x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}
+\begin{bmatrix} 
+    c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
+    c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
+    c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
+    c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
+\end{bmatrix} 
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
++ \ldots
+\end{aligned}
+```
+
+Since we want $f(\cdot)$ to be invariant to any permutation $P$, by definition we have 
+```math
+f\left(\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}\right)-f\left(P\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}\right)=0
+```
+That is 
+```math
+\begin{aligned}
+& c^{(0)} - c^{(0)} + 
+\left(\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}
+-\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}P \right)
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix} \\
+\end{aligned}
+```
+
+```math 
+\begin{aligned}
++
+\begin{bmatrix} x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}
+\left(
+\begin{bmatrix} 
+    c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
+    c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
+    c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
+    c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
+\end{bmatrix} 
+-P^{T}
+\begin{bmatrix} 
+    c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
+    c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
+    c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
+    c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
+\end{bmatrix} P
+\right)
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
++ \ldots =0
+\end{aligned}
+```
+
+For this to be true for any $x$, the first order and second order coefficients need to independently satisfy for any permutation $P$, that
+
+```math
+\begin{aligned}
+\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}
+-\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}P 
+=0
+\end{aligned}
+```
+and 
+
+```math
+\begin{aligned}
+\begin{bmatrix} 
+    c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
+    c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
+    c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
+    c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
+\end{bmatrix} 
+-P^{T}
+\begin{bmatrix} 
+    c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
+    c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
+    c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
+    c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
+\end{bmatrix} P
+=0
+\end{aligned}
+```
+
+Here for every $P$ we have an equation about coefficients $c$, and across all $P$ we have a set of equations in the form of $A\overrightarrow{c}=0$. Finding the null space of $A$ would give us the degrees of freedom that the coefficients $c$ can have. That's the key idea behind https://proceedings.mlr.press/v139/finzi21a/finzi21a.pdf and interested readers can read further.
+
+For our specific case, in the first-order term, obviously we have
+```math
+c^{(1)}_{0}=c^{(1)}_{1}=c^{(1)}_{2}=c^{(1)}_{3}\triangleq \textcolor{orange}{b}
+```
+In other words, the first order term only has 1 degree of freedom. The second order term turned out to have 2 degrees of freedom 
+
+```math
+\begin{aligned}
+c^{(2)}_{ii}\triangleq \textcolor{blue}{c} \\
+c^{(2)}_{ij}\triangleq \textcolor{green}{d}, i\ne j
+\end{aligned}
+```
+
+So our permutation invariant function turned out to be
+```math
+\begin{aligned}
+f\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
+= & \textcolor{red}{a}+ 
+\begin{bmatrix} \textcolor{orange}{b} & \textcolor{orange}{b} & \textcolor{orange}{b} & \textcolor{orange}{b}\end{bmatrix} 
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
++
+\begin{bmatrix} x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}
+\begin{bmatrix} 
+    \textcolor{blue}{c} & \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{green}{d} \\
+    \textcolor{green}{d} & \textcolor{blue}{c} & \textcolor{green}{d} & \textcolor{green}{d} \\
+    \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{blue}{c} & \textcolor{green}{d} \\
+    \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{blue}{c} 
+\end{bmatrix} 
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
++ \ldots
+\end{aligned}
+```
+Now, let's take a parameter-centric view and pool inputs to the parameters
+```math
+\begin{aligned}
+f\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
+&=  \textcolor{red}{a}
++\textcolor{orange}{b} \sum_{i=0}^{3} x_{i}
++\textcolor{blue}{(c-d)} \sum_{i=0}^{3} x_{i} x_{i}
++\textcolor{green}{d} \sum_{i=0}^{3} \sum_{j=0}^{3} x_{i} x_{j}
++\ldots
+\end{aligned}
+```
+From this, it seems that we would be able to implement $f(\cdot)$ as a pooling layer followed by a linear layer. 
+
+Now you have learned the basics, try this method yourself on the following problems:
+
+
+<details>
+
+<summary> 
+2D permutation invariance, 2x2 input 
+</summary>
+
+```math
+\begin{aligned}
+g\left(\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix}\right)
+= &
+a
++b \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}
++c \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}  x_{ij}
++d \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{ik}
++e \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{kj} \\
+&+f \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} \sum_{l=0}^{1} x_{ij}  x_{kl}
++\ldots
+\end{aligned}
+```
+
+</details>
+
+<details>
+
+<summary> 
+1D permutation equivariance, 1x4 input and output
+</summary>
+
+```math
+\begin{aligned}
+F_i\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
+&=
+a_{i} 
++ 
+b_{i}
+x_{i}
++ 
+c_{i}
+\sum_{j=0}^{3} x_{j}
++
+d_{i}
+x_{i}^{2}
++ 
+e_{i}
+x_{i} \sum_{j=0}^{3} x_{j}
++ 
+f_{i}
+\sum_{j=0}^{3} \sum_{k=0}^{3} x_{j} x_{k}
+
++\dots
+\end{aligned}
+```
+
+</details>
+
+<details>
+
+<summary> 
+1D permutation invariance with a non-equivariant latent dimension, 2x2 input
+</summary>
+
+```math
+\begin{aligned}
+f\left(\begin{bmatrix} x_{00} \\ x_{01}  \\  x_{10} \\ x_{11} \end{bmatrix} \right)
+= & a+ 
+\begin{bmatrix} b_0 & b_1 & b_0 & b_1\end{bmatrix} 
+\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11}\end{bmatrix}
++
+\begin{bmatrix} x_{00} & x_{01} & x_{10} & x_{11}\end{bmatrix}
+\begin{bmatrix} 
+    c_{00} & c_{01} & d_{00} & d_{01} \\
+    c_{10} & c_{11} & d_{10} & d_{11} \\
+    d_{00} & d_{01} & c_{00} & c_{01} \\
+    d_{10} & d_{11} & c_{10} & c_{11} 
+\end{bmatrix} 
+\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11}\end{bmatrix}
++ \ldots
+\end{aligned}
+```
+
+Modeling non-equivariant dimensions lead to $1x2$ parameter blocks in the first order term, and $2x2$ parameter blocks in the second order term. Parameter block size will grow exponentially with respect to order. 
+
+</details>
+
+
+
+
+
+ 
+
+
 
 
 ## Use cases
@@ -36,49 +272,49 @@ import torch.nn.functional as F
 
 #Implements the following pooling terms: 'ZabY->ZabY', 'ZabY->ZacY', 'ZacY->ZbcY', 'ZacY->ZbdY', 'ZacY,ZadY,ZbcY->ZbdY', 'ZacY,ZadY,ZaeY,ZbcY,ZbdY->ZbeY', 'ZadY,ZaeY,ZbdY,ZbeY,ZcdY->ZceY'
 class einpool_ab(nn.Module):
-	Kin=17
-	Kout=7
-	def forward(self,x):
-		N,M,KH=x.shape[-3:]
-		H=KH//17
-		x=x.split(H,dim=-1)
-		y0=x[0]
-		y1=x[1].sum(-2,keepdim=True).repeat(1,M,1)
-		y2=x[2].sum(-3,keepdim=True).repeat(N,1,1)
-		y3=x[3].sum([-2,-3],keepdim=True).repeat(N,M,1)
-		y4=torch.einsum('acH,adY,bcH->bdH',x[4],x[5],x[6])
-		y5=torch.einsum('acH,bcH,adH,bdH,aeH->beH',x[7],x[8],x[9],x[10],x[11])
-		y6=torch.einsum('adH,aeH,bdH,beH,cdH->ceH',x[12],x[13],x[14],x[15],x[16])
-		y=torch.cat((y0,y1,y2,y3,y4,y5,y6),dim=-1)
-		return y
+    Kin=17
+    Kout=7
+    def forward(self,x):
+        N,M,KH=x.shape[-3:]
+        H=KH//17
+        x=x.split(H,dim=-1)
+        y0=x[0]
+        y1=x[1].sum(-2,keepdim=True).repeat(1,M,1)
+        y2=x[2].sum(-3,keepdim=True).repeat(N,1,1)
+        y3=x[3].sum([-2,-3],keepdim=True).repeat(N,M,1)
+        y4=torch.einsum('acH,adY,bcH->bdH',x[4],x[5],x[6])
+        y5=torch.einsum('acH,bcH,adH,bdH,aeH->beH',x[7],x[8],x[9],x[10],x[11])
+        y6=torch.einsum('adH,aeH,bdH,beH,cdH->ceH',x[12],x[13],x[14],x[15],x[16])
+        y=torch.cat((y0,y1,y2,y3,y4,y5,y6),dim=-1)
+        return y
 
 #2-layer mlp
 def mlp2(ninput,nh,noutput):
-	return nn.Sequential(nn.Linear(ninput,nh),nn.GELU(),nn.Linear(nh,noutput))
+    return nn.Sequential(nn.Linear(ninput,nh),nn.GELU(),nn.Linear(nh,noutput))
 
 class einnet(nn.Module):
-	def __init__(self,ninput,nh0,nh,noutput,nstacks,pool):
-		super().__init__()
-		assert nstacks>=2
-		self.t=nn.ModuleList()
-		self.t.append(mlp2(ninput,nh,nh0*pool.Kin))
-		for i in range(nstacks-2):
-			self.t.append(mlp2(nh0*pool.Kout,nh,nh0*pool.Kin))
-		
-		self.t.append(mlp2(nh0*pool.Kout,nh,noutput))
-		self.pool=pool
-	
-	def forward(self,x):
-		h=self.t[0](x)
-		for i in range(1,len(self.t)):
-			hi=F.softmax(h.view(*h.shape[:-3],-1,h.shape[-1]),dim=-2).view(*h.shape)
-			hi=self.t[i](self.pool(hi))
-			if i<len(self.t)-1:
-				h=h+hi
-			else:
-				h=hi
-		
-		return h
+    def __init__(self,ninput,nh0,nh,noutput,nstacks,pool):
+        super().__init__()
+        assert nstacks>=2
+        self.t=nn.ModuleList()
+        self.t.append(mlp2(ninput,nh,nh0*pool.Kin))
+        for i in range(nstacks-2):
+            self.t.append(mlp2(nh0*pool.Kout,nh,nh0*pool.Kin))
+        
+        self.t.append(mlp2(nh0*pool.Kout,nh,noutput))
+        self.pool=pool
+    
+    def forward(self,x):
+        h=self.t[0](x)
+        for i in range(1,len(self.t)):
+            hi=F.softmax(h.view(*h.shape[:-3],-1,h.shape[-1]),dim=-2).view(*h.shape)
+            hi=self.t[i](self.pool(hi))
+            if i<len(self.t)-1:
+                h=h+hi
+            else:
+                h=hi
+        
+        return h
 
 ```
 
@@ -106,6 +342,18 @@ Process an ARC-AGI example into a knowledge graph.
 data_train=[{"input": [[8, 6], [6, 4]], "output": [[8, 6, 8, 6, 8, 6], [6, 4, 6, 4, 6, 4], [6, 8, 6, 8, 6, 8], [4, 6, 4, 6, 4, 6], [8, 6, 8, 6, 8, 6], [6, 4, 6, 4, 6, 4]]}, {"input": [[7, 9], [4, 3]], "output": [[7, 9, 7, 9, 7, 9], [4, 3, 4, 3, 4, 3], [9, 7, 9, 7, 9, 7], [3, 4, 3, 4, 3, 4], [7, 9, 7, 9, 7, 9], [4, 3, 4, 3, 4, 3]]}]
 data_test=[{"input": [[3, 2], [7, 8]], "output": [[3, 2, 3, 2, 3, 2], [7, 8, 7, 8, 7, 8], [2, 3, 2, 3, 2, 3], [8, 7, 8, 7, 8, 7], [3, 2, 3, 2, 3, 2], [7, 8, 7, 8, 7, 8]]}]
 
+data_test=[{"input": [[0, 0, 0, 2], [0, 2, 2, 0], [2, 0, 0, 2], [0, 2, 2, 0], [2, 0, 2, 2], [0, 0, 0, 2], [7, 7, 7, 7], [6, 6, 0, 6], [6, 6, 6, 0], [0, 0, 0, 0], [6, 6, 0, 6], [6, 0, 6, 0], [0, 0, 6, 6]], "output": [[0, 0, 8, 0], [0, 0, 0, 8], [0, 8, 8, 0], [0, 0, 0, 0], [0, 8, 0, 0], [8, 8, 0, 0]]}]
+
+data_train=[{"input": [[0, 2, 2, 0], [2, 0, 0, 0], [0, 2, 0, 2], [2, 2, 2, 2], [0, 0, 2, 0], [0, 0, 2, 2], [7, 7, 7, 7], [0, 6, 6, 0], [0, 0, 0, 0], [6, 6, 6, 6], [6, 6, 0, 6], [0, 6, 6, 6], [0, 0, 6, 0]], "output": [[8, 0, 0, 8], [0, 8, 8, 8], [0, 0, 0, 0], [0, 0, 0, 0], [8, 0, 0, 0], [8, 8, 0, 0]]}, {"input": [[2, 2, 0, 2], [2, 0, 2, 2], [2, 2, 0, 0], [0, 2, 0, 2], [0, 2, 2, 0], [2, 0, 0, 2], [7, 7, 7, 7], [6, 0, 6, 6], [0, 6, 0, 0], [0, 0, 0, 0], [0, 0, 0, 6], [6, 6, 0, 0], [6, 0, 6, 0]], "output": [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 8, 8], [8, 0, 8, 0], [0, 0, 0, 8], [0, 8, 0, 0]]}, {"input": [[0, 0, 0, 2], [2, 0, 0, 0], [0, 2, 2, 2], [0, 0, 0, 2], [2, 0, 2, 0], [0, 2, 2, 0], [7, 7, 7, 7], [6, 0, 6, 6], [6, 0, 0, 6], [0, 6, 6, 6], [6, 0, 0, 0], [6, 0, 0, 6], [0, 0, 6, 0]], "output": [[0, 8, 0, 0], [0, 8, 8, 0], [8, 0, 0, 0], [0, 8, 8, 0], [0, 8, 0, 0], [8, 0, 0, 8]]}, {"input": [[2, 2, 0, 0], [0, 2, 2, 0], [2, 2, 0, 0], [2, 0, 0, 0], [0, 0, 0, 2], [2, 2, 0, 0], [7, 7, 7, 7], [6, 6, 6, 6], [6, 0, 6, 6], [6, 6, 0, 0], [0, 0, 0, 0], [6, 6, 0, 0], [0, 0, 6, 0]], "output": [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 8, 8], [0, 8, 8, 8], [0, 0, 8, 0], [0, 0, 0, 8]]}]
+
+
+sz=[max(torch.Tensor(x['input']).shape) for x in data_train]
+sz+=[max(torch.Tensor(x['output']).shape) for x in data_train]
+sz+=[max(torch.Tensor(x['input']).shape) for x in data_test]
+sz+=[max(torch.Tensor(x['output']).shape) for x in data_test]
+sz=max(sz)
+
+
 #Describe KG into grid
 def describe(input,output,ex_name='example'):
     links=[]
@@ -114,21 +362,35 @@ def describe(input,output,ex_name='example'):
     for j in range(H):
         for k in range(W):
             links.append(['%s_input_%d_%d'%(ex_name,j,k),'input_of',ex_name])
-            links.append(['%s_input_%d_%d'%(ex_name,j,k),'has_tile_x','num_%d'%(j)])
-            links.append(['%s_input_%d_%d'%(ex_name,j,k),'has_tile_y','num_%d'%(k)])
-            links.append(['%s_input_%d_%d'%(ex_name,j,k),'has_tile_-x','num_%d'%(H-1-j)])
-            links.append(['%s_input_%d_%d'%(ex_name,j,k),'has_tile_-y','num_%d'%(W-1-k)])
+            #links.append(['%s_input_%d_%d'%(ex_name,j,k),'has_tile_x','num_%d'%(j)])
+            #links.append(['%s_input_%d_%d'%(ex_name,j,k),'has_tile_y','num_%d'%(k)])
+            #links.append(['%s_input_%d_%d'%(ex_name,j,k),'has_tile_-x','num_%d'%(H-1-j)])
+            #links.append(['%s_input_%d_%d'%(ex_name,j,k),'has_tile_-y','num_%d'%(W-1-k)])
             links.append(['%s_input_%d_%d'%(ex_name,j,k),'has_color','color_%d'%(input[j][k])])
+    
+    for j in range(H):
+        for k in range(W):
+            if j<H-1:
+                links.append(['%s_input_%d_%d'%(ex_name,j,k),'next_x','%s_input_%d_%d'%(ex_name,j+1,k)])
+            if k<W-1:
+                links.append(['%s_input_%d_%d'%(ex_name,j,k),'next_y','%s_input_%d_%d'%(ex_name,j,k+1)])
     
     H,W=len(output),len(output[0])
     for j in range(H):
         for k in range(W):
             links.append(['%s_output_%d_%d'%(ex_name,j,k),'output_of',ex_name])
-            links.append(['%s_output_%d_%d'%(ex_name,j,k),'has_tile_x','num_%d'%(j)])
-            links.append(['%s_output_%d_%d'%(ex_name,j,k),'has_tile_y','num_%d'%(k)])
-            links.append(['%s_output_%d_%d'%(ex_name,j,k),'has_tile_-x','num_%d'%(H-1-j)])
-            links.append(['%s_output_%d_%d'%(ex_name,j,k),'has_tile_-y','num_%d'%(W-1-k)])
+            #links.append(['%s_output_%d_%d'%(ex_name,j,k),'has_tile_x','num_%d'%(j)])
+            #links.append(['%s_output_%d_%d'%(ex_name,j,k),'has_tile_y','num_%d'%(k)])
+            #links.append(['%s_output_%d_%d'%(ex_name,j,k),'has_tile_-x','num_%d'%(H-1-j)])
+            #links.append(['%s_output_%d_%d'%(ex_name,j,k),'has_tile_-y','num_%d'%(W-1-k)])
             links_test.append(['%s_output_%d_%d'%(ex_name,j,k),'has_color','color_%d'%(output[j][k])])
+    
+    for j in range(H):
+        for k in range(W):
+            if j<H-1:
+                links.append(['%s_output_%d_%d'%(ex_name,j,k),'next_x','%s_output_%d_%d'%(ex_name,j+1,k)])
+            if k<W-1:
+                links.append(['%s_output_%d_%d'%(ex_name,j,k),'next_y','%s_output_%d_%d'%(ex_name,j,k+1)])
     
     return links,links_test
 ```
@@ -136,36 +398,60 @@ def describe(input,output,ex_name='example'):
 Split data into train/test splits
 ```python
 #Divide links into train_input, train_output, test_output
-links_seen=[]
+links_train_input=[]
 links_train_output=[]
-links_test=[]
-for i in range(5):
-	links_seen.append(['num_%d'%(i),'less_than','num_%d'%(i+1)])
+links_test_input=[]
+links_test_output=[]
 
+basic_links=[]
+#for i in range(sz-1):
+#    basic_links.append(['num_%d'%(i),'less_than','num_%d'%(i+1)])
+
+#basic_links.append(['color_0','is_bg','color_0'])
+
+
+all_links=basic_links
 for i,ex in enumerate(data_train):
-	links_i,links_test_i=describe(ex['input'],ex['output'],'train_%d'%i)
-	links_seen+=links_i
-	links_seen+=links_test_i
-	links_train_output.append(links_test_i)
+    links_i,links_test_i=describe(ex['input'],ex['output'],'train_%d'%i)
+    links_train_input.append(basic_links+links_i)
+    links_train_output.append(links_test_i)
+    all_links=all_links+links_i+links_test_i
 
 for i,ex in enumerate(data_test):
-	links_i,links_test_i=describe(ex['input'],ex['output'],'test_%d'%i)
-	links_seen+=links_i
-	links_test+=links_test_i
+    links_i,links_test_i=describe(ex['input'],ex['output'],'test_%d'%i)
+    links_test_input.append(basic_links+links_i)
+    links_test_output.append(links_test_i)
+    all_links=all_links+links_i+links_test_i
 
 #Create entity/relation dictionaries
-all_links=links_seen+links_test
 entities=sorted(list(set([x[0] for x in all_links]+[x[2] for x in all_links])))
 relations=sorted(list(set([x[1] for x in all_links])))
 
 def tuple_to_tensor(links,entities,relations):
-	data=torch.LongTensor([[entities.index(x[0]),entities.index(x[2]),relations.index(x[1])] for x in links])
-	X=torch.sparse_coo_tensor(data.t(),[1.0 for i in data],[len(entities),len(entities),len(relations)])
-	return X.coalesce().to_dense()
+    data=torch.LongTensor([[entities.index(x[0]),entities.index(x[2]),relations.index(x[1])] for x in links])
+    X=torch.sparse_coo_tensor(data.t(),[1.0 for i in data],[len(entities),len(entities),len(relations)])
+    return X.coalesce().to_dense()
 
-X=tuple_to_tensor(links_seen,entities,relations).cuda()
-Y_train=[tuple_to_tensor(links,entities,relations).cuda() for links in links_train_output]
-Y_test=tuple_to_tensor(links_test,entities,relations).cuda()
+def tuple_to_tensor2(links,links_test):
+    all_links=links+links_test
+    entities=sorted(list(set([x[0] for x in all_links]+[x[2] for x in all_links])))
+    relations=sorted(list(set([x[1] for x in all_links])))
+    print(len(entities),len(relations))
+    return tuple_to_tensor(links,entities,relations).cuda(),tuple_to_tensor(links_test,entities,relations).cuda(),
+
+X_train=[]
+Y_train=[]
+for i in range(len(links_train_input)):
+    x,y=tuple_to_tensor2(links_train_input[i],links_train_output[i])
+    X_train.append(x)
+    Y_train.append(y)
+
+X_test=[]
+Y_test=[]
+for i in range(len(links_test_input)):
+    x,y=tuple_to_tensor2(links_test_input[i],links_test_output[i])
+    X_test.append(x)
+    Y_test.append(y)
 
 ```
 
@@ -173,90 +459,86 @@ Pooling and network design
 ```python
 #Implements the following pooling terms: ['ZaaY->ZaaY','ZabY->ZabY','ZabY->ZbaY', 'ZabY->ZacY', 'ZabY->ZcbY', 'ZabY->ZcdY','ZabY,ZbcY->ZacY']
 class einpool_aa(nn.Module):
-	Kin=8
-	Kout=7
-	def forward(self,x):
-		N,M,KH=x.shape[-3:]
-		H=KH//8
-		x=x.split(H,dim=-1)
-		y0=x[0]
-		y1=x[1].transpose(-2,-3)
-		y2=x[2].sum(-2,keepdim=True).repeat(1,M,1)
-		y3=x[3].sum(-3,keepdim=True).repeat(N,1,1)
-		y4=x[4].sum([-2,-3],keepdim=True).repeat(N,M,1)
-		y5=x[5].diagonal(dim1=-2,dim2=-3).diag_embed(dim1=-2,dim2=-3)
-		y6=torch.einsum('abH,bcH->acH',x[6],x[7])
-		y=torch.cat((y0,y1,y2,y3,y4,y5,y6),dim=-1)
-		return y
+    Kin=8
+    Kout=7
+    def forward(self,x):
+        N,M,KH=x.shape[-3:]
+        H=KH//8
+        x=x.split(H,dim=-1)
+        y0=x[0]
+        y1=x[1].transpose(-2,-3)
+        y2=x[2].sum(-2,keepdim=True).repeat(1,M,1)
+        y3=x[3].sum(-3,keepdim=True).repeat(N,1,1)
+        y4=x[4].sum([-2,-3],keepdim=True).repeat(N,M,1)
+        y5=x[5].diagonal(dim1=-2,dim2=-3).diag_embed(dim1=-2,dim2=-3)
+        y6=torch.einsum('abH,bcH->acH',x[6],x[7])
+        y=torch.cat((y0,y1,y2,y3,y4,y5,y6),dim=-1)
+        return y
 
 
-net=einnet(ninput=len(relations),nh0=32,nh=128,noutput=len(relations),nstacks=6,pool=einpool_aa()).cuda()
+net=einnet(ninput=len(relations),nh0=8,nh=32,noutput=len(relations),nstacks=6,pool=einpool_aa()).cuda()
 ```
 
 Start training
 ```python
 
 def forward(X,Y):
-	ind=Y.nonzero()
-	s=net(X)
-	s=s[ind[:,0],:,ind[:,2]]
-	loss=F.cross_entropy(s,ind[:,1])
-	_,pred=s.max(dim=-1)
-	acc=pred.eq(ind[:,1]).float().mean()
-	return loss,pred,acc
+    ind=Y.nonzero()
+    s=net(X)
+    s1=s[ind[:,0],:,ind[:,2]]
+    loss=F.cross_entropy(s1,ind[:,1])
+    s2=s[:,ind[:,1],ind[:,2]+len(relations)].contiguous().t()
+    loss=loss+F.cross_entropy(s2,ind[:,0])
+    _,pred=s1.max(dim=-1)
+    acc=pred.eq(ind[:,1]).float().mean()
+    return loss,pred,acc
 
-def powerset(x):
-	if len(x)==1:
-		return [x]
-	
-	s=powerset(x[:-1])
-	return s+[[x[-1]]]+[v+[x[-1]] for v in s]
 
-splits=powerset(list(range(len(Y_train))))
-import random
-
-def divide(X):
-	missing=torch.rand_like(X).gt(0.90).to(X.dtype)
-	X_=X.data*(1-missing)
-	Y_=X.data*missing
-	return X_,Y_
+def split(X):
+    mask=torch.rand_like(X).lt(0.8).to(X.dtype)
+    X0=X.data*mask
+    X1=X.data*(1-mask)
+    return X0,X1
 
 
 opt=torch.optim.AdamW(net.parameters(),lr=1e-3,weight_decay=0)
 
 loss=[]
-for i in range(100000):
-	net.zero_grad()
-	for j in range(3):
-		ind=splits[j%len(splits)]
-		Y=torch.stack([Y_train[k] for k in ind],dim=0).sum(dim=0)
-		#loss_j,_,_=forward(X-Y,Y)
-		X_,Y_=divide(X-Y)
-		loss_j,_,_=forward(X_,Y)
-		loss_j.backward()
-		loss.append(float(loss_j.data))
-	
-	opt.step()
-	loss_i=sum(loss)/len(loss)
-	print('iter %d, loss %f   '%(i,loss_i),end='\r')
-	
-	if i%1000==0:
-		with torch.no_grad():
-			for j in range(len(Y_train)):
-				loss_eval,pred,acc=forward(X-Y_train[j],Y_train[j])
-				print('iter %d, loss %f, loss_tr %f, acc %f,   '%(i,loss_i,loss_eval,acc))
-				print(pred.view(-1).tolist())
-			
-			loss_eval,pred,acc=forward(X,Y_test)
-			print('iter %d, loss %f, loss_eval %f, acc %f,   '%(i,loss_i,loss_eval,acc))
-			print(pred.view(-1).tolist())
-			loss=[]
+for i in range(1000000):
+    net.zero_grad()
+    for j in range(len(X_train)):
+        loss_j,_,_=forward(X_train[j],Y_train[j])
+        loss_j.backward()
+        loss.append(float(loss_j.data))
+    
+    
+    #for j in range(len(X_train)):
+    #    X,Y=split(X_train[j]+Y_train[j])
+    #    loss_j,_,_=forward(X,Y)
+    #    loss_j.backward()
+    #    loss.append(float(loss_j.data))
+    
+    
+    opt.step()
+    loss_i=sum(loss)/len(loss)
+    print('iter %d, loss %f   '%(i,loss_i),end='\r')
+    
+    if i%1000==0:
+        with torch.no_grad():
+            for j in range(len(X_train)):
+                loss_eval,pred,acc=forward(X_train[j],Y_train[j])
+                print('iter %d, loss %f, loss_tr %f, acc %f,   '%(i,loss_i,loss_eval,acc))
+                print(pred.view(-1).tolist())
+            
+            for j in range(len(X_test)):
+                loss_eval,pred,acc=forward(X_test[j],Y_test[j])
+                print('iter %d, loss %f, loss_eval %f, acc %f,   '%(i,loss_i,loss_eval,acc))
+                print(pred.view(-1).tolist())
+            
+            loss=[]
 
 
-with torch.no_grad():
-	loss_eval,pred,acc=forward(X-Y_train[1]-Y_train[0],Y_train[1])
-	print('iter %d, loss %f, loss_eval %f, acc %f,   '%(i,loss,loss_eval,acc))
-	print(pred.view(-1).tolist())
+
 
 
 
