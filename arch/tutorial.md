@@ -15,13 +15,16 @@ Obviously, if the einsum operations were picked to follow the desired symmetry, 
 
 In this post, we'll walk through 1) a first principle derivation of the design of the network starting from the Taylor series of nD permutation symmetric functions requiring little math, and 2) from scratch implementations on several toy problems, including matrix inverse and knowledge graph completion using an ARC-AGI challenge case as an example.
 
-## From the ground up
+## Parameterizing Invariant and Equivariant Functions
 
-Our general approach here is to 
+Speaking of permutation invariance, you may already have your faviorite ways to design permutation invariant neural networks for certain types of problems. 
+But here we'll introduce a more general approach to designing universal learners -- which represent any such invariant functions -- for any linear symmetry -- . 
+The approach is based on equivariant linear layers, 
+linear symmetries 
+is to look into the Taylor series form and .
 
 
-
-As a general rule of thumb, enforcing symmetry on a neural network induces parameter sharing.
+As a general rule of thumb, enforcing symmetry on a neural network induces weight sharing. 
 
 
 ### The intuition
