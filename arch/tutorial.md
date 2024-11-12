@@ -15,166 +15,157 @@ Obviously, if the einsum operations were picked to follow the desired symmetry, 
 
 In this post, we'll walk through 1) a first principle derivation of the design of the network starting from the Taylor series of nD permutation symmetric functions requiring little math, and 2) from scratch implementations on several toy problems, including matrix inverse and knowledge graph completion using an ARC-AGI challenge case as an example.
 
-## Parameterizing Invariant and Equivariant Functions
+## I. In Theory: Paramterizing Symmetric Functions in Taylor Series
 
-Speaking of permutation invariance, you may already have your faviorite ways to design permutation invariant neural networks for certain types of problems. 
-But here we'll introduce a more general approach to designing universal learners -- which represent any such invariant functions -- for any linear symmetry -- . 
-The approach is based on equivariant linear layers, 
-linear symmetries 
-is to look into the Taylor series form and .
+Speaking of permutation invariance, you may already have your faviorite ways to design invariant neural networks for certain types of problems. 
+But here we'll introduce a simple yet general Taylor series-based technique necessary for studying complex equivariance patterns. Specifically, we aim to design efficient universal learners -- that can represent any such invariant or equivariant functions -- for linear symmetries -- invariance or equivariance to linear transformations on the input. 
+For advanced readers, the general idea follows [Equivariant Multilayer Perceptrons (EMLP)](https://github.com/mfinzi/equivariant-MLP) with a high-order twist. 
+
+The steps are: 
+1) Express a function as a Taylor series, 
+2) Write the symmetry constraint as equations about the coefficients,
+3) Solve the equations for free parameters and the parameter sharing pattern.
+
+Let's start from 1D permutation invariance as an example to demonstrate how the technique works.
 
 
-As a general rule of thumb, enforcing symmetry on a neural network induces weight sharing. 
+### I.1 Example: 1D permutation invariance
 
-
-### The intuition
-
-Let's start from a simple 1-D permutation invariance case. Let's say we want to parameterize a function  
+Let's say we want to make a function 
 ```math
-y=f\left( \begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix} \right)
+y=f\left( \begin{bmatrix}x_{0} & x_{1} & x_{2}\end{bmatrix} \right)
 ```
-to be invariant to permutation. Consider the Taylor series
+invariant to permutation of $x_0$, $x_1$, $x_2$.
+
+Consider the Taylor series
 ```math
 \begin{aligned}
-f\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
-= & c^{(0)} + 
-\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix} 
-\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix} \\ 
-& +
-\begin{bmatrix} x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}
+f&\left(\begin{bmatrix}x_{0} & x_{1} & x_{2}\end{bmatrix}\right) \\
+= & a + 
+\begin{bmatrix} b_0 & b_1 & b_2\end{bmatrix} 
+\begin{bmatrix} x_0 \\ x_1 \\ x_2 \end{bmatrix} +
+\begin{bmatrix} x_0 & x_{1} & x_{2}\end{bmatrix}
 \begin{bmatrix} 
-    c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
-    c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
-    c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
-    c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
+    c_{00} & c_{01} & c_{02}\\
+    c_{10} & c_{11} & c_{12}\\
+    c_{20} & c_{21} & c_{22}
 \end{bmatrix} 
-\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \end{bmatrix}
 + \ldots
 \end{aligned}
 ```
 
-Since we want $f(\cdot)$ to be invariant to any permutation $P$, by definition we have 
+Since we want $f(\cdot)$ to be invariant to any permutation matrix $P$, the invariant constraint says 
 ```math
-f\left(\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}\right)-f\left(P\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}\right)=0
+f\left(\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2}\end{bmatrix}\right)=f\left(
+    \begin{bmatrix} 
+      &   &  \\
+      & P &  \\
+      &   &  
+    \end{bmatrix} 
+    \begin{bmatrix}x_{0} \\ x_{1} \\ x_{2}\end{bmatrix}\right)
 ```
-That is 
-```math
-\begin{aligned}
-& c^{(0)} - c^{(0)} + 
-\left(\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}
--\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}P \right)
-\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix} \\
-\end{aligned}
-```
+For our Taylor series form, this means that all order-k coefficients need to match. That is for any permutation matrix $P$
 
-```math 
+```math
 \begin{aligned}
-+
-\begin{bmatrix} x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}
-\left(
+a = & a \\
+\begin{bmatrix} b_0 & b_1 & b_2\end{bmatrix}  = &
+\begin{bmatrix} b_0 & b_1 & b_2\end{bmatrix} 
+    \begin{bmatrix} 
+      &   &  \\
+      & P &  \\
+      &   &  
+    \end{bmatrix} 
+\\
 \begin{bmatrix} 
-    c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
-    c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
-    c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
-    c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
+    c_{00} & c_{01} & c_{02}\\
+    c_{10} & c_{11} & c_{12}\\
+    c_{20} & c_{21} & c_{22}
 \end{bmatrix} 
--P^{T}
+=& 
 \begin{bmatrix} 
-    c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
-    c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
-    c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
-    c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
-\end{bmatrix} P
-\right)
-\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
-+ \ldots =0
-\end{aligned}
-```
-
-For this to be true for any $x$, the first order and second order coefficients need to independently satisfy for any permutation $P$, that
-
-```math
-\begin{aligned}
-\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}
--\begin{bmatrix} c^{(1)}_{0} & c^{(1)}_{1} & c^{(1)}_{2} & c^{(1)}_{3}\end{bmatrix}P 
-=0
-\end{aligned}
-```
-and 
-
-```math
-\begin{aligned}
-\begin{bmatrix} 
-    c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
-    c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
-    c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
-    c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
+    &   &  \\
+    & P^T &  \\
+    &   &  
 \end{bmatrix} 
--P^{T}
 \begin{bmatrix} 
-    c^{(2)}_{00} & c^{(2)}_{01} & c^{(2)}_{02} & c^{(2)}_{03} \\
-    c^{(2)}_{10} & c^{(2)}_{11} & c^{(2)}_{12} & c^{(2)}_{13} \\
-    c^{(2)}_{20} & c^{(2)}_{21} & c^{(2)}_{22} & c^{(2)}_{23} \\
-    c^{(2)}_{30} & c^{(2)}_{31} & c^{(2)}_{32} & c^{(2)}_{33} 
-\end{bmatrix} P
-=0
-\end{aligned}
-```
-
-Here for every $P$ we have an equation about coefficients $c$, and across all $P$ we have a set of equations in the form of $A\overrightarrow{c}=0$. Finding the null space of $A$ would give us the degrees of freedom that the coefficients $c$ can have. That's the key idea behind https://proceedings.mlr.press/v139/finzi21a/finzi21a.pdf and interested readers can read further.
-
-For our specific case, in the first-order term, obviously we have
-```math
-c^{(1)}_{0}=c^{(1)}_{1}=c^{(1)}_{2}=c^{(1)}_{3}\triangleq \textcolor{orange}{b}
-```
-In other words, the first order term only has 1 degree of freedom. The second order term turned out to have 2 degrees of freedom 
-
-```math
-\begin{aligned}
-c^{(2)}_{ii}\triangleq \textcolor{blue}{c} \\
-c^{(2)}_{ij}\triangleq \textcolor{green}{d}, i\ne j
-\end{aligned}
-```
-
-So our permutation invariant function turned out to be
-```math
-\begin{aligned}
-f\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
-= & \textcolor{red}{a}+ 
-\begin{bmatrix} \textcolor{orange}{b} & \textcolor{orange}{b} & \textcolor{orange}{b} & \textcolor{orange}{b}\end{bmatrix} 
-\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
-+
-\begin{bmatrix} x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}
-\begin{bmatrix} 
-    \textcolor{blue}{c} & \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{green}{d} \\
-    \textcolor{green}{d} & \textcolor{blue}{c} & \textcolor{green}{d} & \textcolor{green}{d} \\
-    \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{blue}{c} & \textcolor{green}{d} \\
-    \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{green}{d} & \textcolor{blue}{c} 
+    c_{00} & c_{01} & c_{02}\\
+    c_{10} & c_{11} & c_{12}\\
+    c_{20} & c_{21} & c_{22}
 \end{bmatrix} 
-\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3}\end{bmatrix}
+    \begin{bmatrix} 
+      &   &  \\
+      & P &  \\
+      &   &  
+    \end{bmatrix} \\
+& \ldots
+\end{aligned}
+```
+Which are all linear equations about coefficients $a$, $b_i$ and $c_{ij}$. So we can just enumerate all $P$ to get all the equations, and then solve them. For $b_i$ for example, enumerating different permutations $P$ would give
+
+```math
+\begin{bmatrix} b_0 \\ b_1 \\ b_2\end{bmatrix}  = 
+\begin{bmatrix} b_0 \\ b_2 \\ b_1\end{bmatrix}  = 
+\begin{bmatrix} b_1 \\ b_0 \\ b_2\end{bmatrix}  = 
+\begin{bmatrix} b_1 \\ b_2 \\ b_0\end{bmatrix}  = 
+\begin{bmatrix} b_2 \\ b_0 \\ b_1\end{bmatrix}  = 
+\begin{bmatrix} b_2 \\ b_1 \\ b_0\end{bmatrix} 
+```
+
+Which is more than enough to say $b_0=b_1=b_2$. So the order-1 term has only 1 degree of freedom.
+
+For $c_i$ there are more equations, but it turns out that solving the equations across all permutations would yield 
+```math
+c_{00}=c_{11}=c_{22} \\
+c_{01}=c_{10}=c_{10}=c_{12}=c_{20}=c_{21}
+```
+So the order 2 term has 2 degrees of freedom, one for the diagonal and one for the off-diagonal.
+
+Apply what we have learned, we can now write
+
+```math
+\begin{aligned}
+y=&f\left( \begin{bmatrix}x_{0} & x_{1} & x_{2}\end{bmatrix} \right)\\
+= & a + 
+\begin{bmatrix} b & b & b\end{bmatrix} 
+\begin{bmatrix} x_0 \\ x_1 \\ x_2 \end{bmatrix} +
+\begin{bmatrix} x_0 & x_{1} & x_{2}\end{bmatrix}
+\begin{bmatrix} 
+    c_{0} & c_{1} & c_{1}\\
+    c_{1} & c_{0} & c_{1}\\
+    c_{1} & c_{1} & c_{0}
+\end{bmatrix} 
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \end{bmatrix}
 + \ldots
 \end{aligned}
 ```
-Now, let's take a parameter-centric view and pool inputs to the parameters
+For a total of 4 free parameters up to order 2, instead of 13 free parameters without the invariance constraint. More generally, for $N$ inputs, we still only need 4 parameters instead of $N^2+N+1$ parameters. So parameterizing with symmetry can sometimes **reduce parameter count** exponentially. 
+
+We can further simplify by focusing on the free parameters
 ```math
 \begin{aligned}
-f\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
-&=  \textcolor{red}{a}
-+\textcolor{orange}{b} \sum_{i=0}^{3} x_{i}
-+\textcolor{blue}{(c-d)} \sum_{i=0}^{3} x_{i} x_{i}
-+\textcolor{green}{d} \sum_{i=0}^{3} \sum_{j=0}^{3} x_{i} x_{j}
-+\ldots
+y=&f\left( \begin{bmatrix}x_{0} & x_{1} & x_{2}\end{bmatrix} \right)\\
+= & a + b \sum_i x_i + (c_0-c_1) \sum_i x_i^2 + c_1 \sum_{i} \sum_{j} x_i x_j + \ldots \\
+= & a + b \sum_i x_i + (c_0-c_1) \sum_i x_i^2 + c_1 (\sum_{i}x_i )^2 + \ldots
 \end{aligned}
 ```
-From this, it seems that we would be able to implement $f(\cdot)$ as a pooling layer followed by a linear layer. 
+An important effect of this simplification is **reduced compute**. It now requires $O(N)$ compute for $N$ inputs instead of $O(N^2)$ for order-2. 
 
-Now you have learned the basics, try this method yourself on the following problems:
+In math terms, the number of free parameters is the dimensionality of the null space of the symmetry constraints. The degrees of freedoms can be numerically calculated from the basis of this null space which is one of the many innovations in [1]. But note that as the basis is often not unique, numerical solvers tend to return linear combinations instead of simple terms, which makes it difficult to simplify. So there is still some fun in manual analysis.
 
+### I.2 Exercises
+If you are interested in going a little deeper, test yourself on a list of exercises for new insights.
+
+**1D translation.** Parameterize function 
+```math
+y=f\left( \begin{bmatrix}x_{0} & x_{1} &x_{2}\end{bmatrix} \right) =f\left( \begin{bmatrix}x_{1} & x_{2} & x_{0}\end{bmatrix} \right)
+```
 
 <details>
 
 <summary> 
-2D permutation invariance, 2x2 input 
+Solution
 </summary>
 
 ```math
@@ -193,78 +184,142 @@ a
 
 </details>
 
+
+**Scale.** Parameterize function 
+```math
+y=f\left( \begin{bmatrix}x_{0} & x_{1} &x_{2}\end{bmatrix} \right) =f\left(\alpha \begin{bmatrix}x_{1} & x_{2} & x_{0}\end{bmatrix} \right)
+```
+For any $\alpha \ne0$.
+
 <details>
 
 <summary> 
-1D permutation equivariance, 1x4 input and output
+Solution
 </summary>
 
 ```math
 \begin{aligned}
-F_i\left(\begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix}\right)
-&=
-a_{i} 
-+ 
-b_{i}
-x_{i}
-+ 
-c_{i}
-\sum_{j=0}^{3} x_{j}
-+
-d_{i}
-x_{i}^{2}
-+ 
-e_{i}
-x_{i} \sum_{j=0}^{3} x_{j}
-+ 
-f_{i}
-\sum_{j=0}^{3} \sum_{k=0}^{3} x_{j} x_{k}
-
-+\dots
+g\left(\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix}\right)
+= &
+a
++b \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}
++c \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}  x_{ij}
++d \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{ik}
++e \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{kj} \\
+&+f \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} \sum_{l=0}^{1} x_{ij}  x_{kl}
++\ldots
 \end{aligned}
 ```
 
 </details>
 
+**1D permutation with latent.** Parameterize function 
+```math
+y=f\left( \begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right) =f\left( \begin{bmatrix}0 & 1 \\ 1 & 0\end{bmatrix}\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right)
+```
+
 <details>
 
 <summary> 
-1D permutation invariance with a non-equivariant latent dimension, 2x2 input
+Solution
 </summary>
 
 ```math
 \begin{aligned}
-f\left(\begin{bmatrix} x_{00} \\ x_{01}  \\  x_{10} \\ x_{11} \end{bmatrix} \right)
-= & a+ 
-\begin{bmatrix} b_0 & b_1 & b_0 & b_1\end{bmatrix} 
-\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11}\end{bmatrix}
-+
-\begin{bmatrix} x_{00} & x_{01} & x_{10} & x_{11}\end{bmatrix}
-\begin{bmatrix} 
-    c_{00} & c_{01} & d_{00} & d_{01} \\
-    c_{10} & c_{11} & d_{10} & d_{11} \\
-    d_{00} & d_{01} & c_{00} & c_{01} \\
-    d_{10} & d_{11} & c_{10} & c_{11} 
-\end{bmatrix} 
-\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11}\end{bmatrix}
-+ \ldots
+g\left(\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix}\right)
+= &
+a
++b \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}
++c \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}  x_{ij}
++d \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{ik}
++e \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{kj} \\
+&+f \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} \sum_{l=0}^{1} x_{ij}  x_{kl}
++\ldots
 \end{aligned}
 ```
 
-Modeling non-equivariant dimensions lead to $1x2$ parameter blocks in the first order term, and $2x2$ parameter blocks in the second order term. Parameter block size will grow exponentially with respect to order. 
+</details>
+
+**2D permutation.** Parameterize function 
+```math
+y=f\left( \begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right) =f\left( \begin{bmatrix}0 & 1 \\ 1 & 0\end{bmatrix}\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right) = f\left(\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix}\begin{bmatrix}0 & 1 \\ 1 & 0\end{bmatrix} \right)
+```
+
+<details>
+
+<summary> 
+Solution
+</summary>
+
+```math
+\begin{aligned}
+g\left(\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix}\right)
+= &
+a
++b \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}
++c \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}  x_{ij}
++d \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{ik}
++e \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{kj} \\
+&+f \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} \sum_{l=0}^{1} x_{ij}  x_{kl}
++\ldots
+\end{aligned}
+```
 
 </details>
 
 
+**1D permutation equivariance.** Parameterize function 
+```math
+\begin{bmatrix}y_{0} \\ y_{1} \\y_{2}\end{bmatrix}=F\left( \begin{bmatrix}x_{0} \\ x_{1} \\ x_{2}\end{bmatrix} \right) =F\left( \begin{bmatrix}&&\\&P&\\&&\end{bmatrix}\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2}\end{bmatrix} \right)
+```
+For any permutation $P$.
+
+
+<details>
+
+<summary> 
+Solution
+</summary>
+
+```math
+\begin{aligned}
+g\left(\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix}\right)
+= &
+a
++b \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}
++c \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}  x_{ij}
++d \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{ik}
++e \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{kj} \\
+&+f \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} \sum_{l=0}^{1} x_{ij}  x_{kl}
++\ldots
+\end{aligned}
+```
+
+</details>
+
+
+### I.3 What we have learned so far
+
+In this section, we have learned that
+1) Symmetry constraints reduce number of free parameters.
+2) A Taylor-series technique can be used to parameterize symmetric functions.
+3) Certain parameterizations can reduce compute.
+4) Different symmetries have different impact on degrees of freedom.
 
 
 
- 
+
+## II n-D permutation symmetry
+### II.1 Common types of permutation symmetry
+### II.2 Permutation symmetry and einsum
+### II.3 Putting everything together: Equivariant Einsum Net
 
 
 
 
-## Use cases
+
+
+## III Use cases
 
 ### $X_{ab}$-type symmetry for matrix inverse
 
