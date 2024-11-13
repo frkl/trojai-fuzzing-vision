@@ -159,7 +159,7 @@ If you are interested in going a little deeper, test yourself on a list of exerc
 
 **1D translation.** Parameterize function 
 ```math
-y=f\left( \begin{bmatrix}x_{0} & x_{1} &x_{2}\end{bmatrix} \right) =f\left( \begin{bmatrix}x_{1} & x_{2} & x_{0}\end{bmatrix} \right)
+y=f\left( \begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix} \right) =f\left( \begin{bmatrix} x_{3} & x_{0} & x_{1} & x_{2}\end{bmatrix} \right)
 ```
 
 <details>
@@ -168,19 +168,84 @@ y=f\left( \begin{bmatrix}x_{0} & x_{1} &x_{2}\end{bmatrix} \right) =f\left( \beg
 Solution
 </summary>
 
+
+According to equivariant constraints, the coefficients of the Taylor series satisfy
 ```math
 \begin{aligned}
-g\left(\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix}\right)
-= &
-a
-+b \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}
-+c \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}  x_{ij}
-+d \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{ik}
-+e \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{kj} \\
-&+f \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} \sum_{l=0}^{1} x_{ij}  x_{kl}
-+\ldots
+a = & a \\
+\begin{bmatrix} b_0 & b_1 & b_2 & b_3\end{bmatrix}  = &
+\begin{bmatrix} b_1 & b_2 & b_3 & b_0\end{bmatrix} 
+\\
+\begin{bmatrix} 
+    c_{00} & c_{01} & c_{02} & c_{03}\\
+    c_{10} & c_{11} & c_{12} & c_{13}\\
+    c_{20} & c_{21} & c_{22} & c_{23}\\
+    c_{30} & c_{31} & c_{32} & c_{33}
+\end{bmatrix} 
+=& 
+\begin{bmatrix} 
+    c_{11} & c_{12} & c_{13} & c_{10} \\
+    c_{21} & c_{22} & c_{23} & c_{20} \\
+    c_{31} & c_{32} & c_{33} & c_{30} \\
+    c_{01} & c_{02} & c_{03} & c_{00} \\
+\end{bmatrix} 
+& \ldots
 \end{aligned}
 ```
+Which means there are 6 free parameters up to order-2.
+```math
+\begin{aligned}
+b_0=b_1=&b_2=b_3 \\
+c_{00}=c_{11}=&c_{22}=c_{33} \\
+c_{01}=c_{12}=&c_{23}=c_{30} \\
+c_{02}=c_{13}=&c_{20}=c_{31} \\
+c_{03}=c_{10}=&c_{21}=c_{32} \\
+\end{aligned}
+```
+Note: considering Hessian transpose symmetry, we would additionally have $c_{ij}=c_{ji}$ and reduce number of free parameters to 5. For now, let us assume that multiply among $x_i$ does not commute.
+
+The parameterization with 6 parameters has an unrolled circular convolution on the order-2 term.
+
+```math
+\begin{aligned}
+y=&f\left( \begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix} \right)\\
+= & a + 
+\begin{bmatrix} b & b & b &b\end{bmatrix} 
+\begin{bmatrix} x_0 \\ x_1 \\ x_2 \\ x_3 \end{bmatrix} +
+\begin{bmatrix} x_0 & x_{1} & x_{2} & x_3\end{bmatrix}
+\begin{bmatrix} 
+    c_{0} & c_{1} & c_{2} & c_{3}\\
+    c_{3} & c_{0} & c_{1} & c_{2}\\
+    c_{2} & c_{3} & c_{0} & c_{1}\\
+    c_{1} & c_{2} & c_{3} & c_{0}
+\end{bmatrix} 
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3} \end{bmatrix}
++ \ldots
+\end{aligned}
+```
+
+Computing the 2nd order term naively would involve $N^2+N$ multiplies for length-$N$ input. A simplification like
+
+```math
+\begin{aligned}
+&\begin{bmatrix} x_0 & x_{1} & x_{2} & x_3\end{bmatrix}
+\begin{bmatrix} 
+    c_{0} & c_{1} & c_{2} & c_{3}\\
+    c_{3} & c_{0} & c_{1} & c_{2}\\
+    c_{2} & c_{3} & c_{0} & c_{1}\\
+    c_{1} & c_{2} & c_{3} & c_{0}
+\end{bmatrix} 
+\begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3} \end{bmatrix} \\
+
+=& \frac{c_0+c_2}{2} (x_0+x_2)^2 + \frac{c_0-c_2}{2}(x_0-x_2)^2 \\ 
+& + \frac{c_1+c_3}{2} (x_0+x_2)(x_1+x_3) + \frac{c_1-c_3}{2}(x_0-x_2)(x_1-x_3) \\ 
+& + \frac{c_3+c_1}{2} (x_1+x_3)(x_0+x_2) + \frac{c_3-c_1}{2}(x_1-x_3)(x_0-x_2) \\ 
+& + \frac{c_0+c_2}{2} (x_1+x_3)^2 + \frac{c_0-c_2}{2} (x_1-x_3)^2 \\ 
+
+\end{aligned}
+```
+In the spirit of the [Butterfly Algorithm](https://en.wikipedia.org/wiki/Butterfly_diagram) for fourier transforms for 1 step would reduce number of multiples down to $\frac{N^2}{2}+N$.
+
 
 </details>
 
@@ -189,7 +254,7 @@ a
 ```math
 y=f\left( \begin{bmatrix}x_{0} & x_{1} &x_{2}\end{bmatrix} \right) =f\left(\alpha \begin{bmatrix}x_{1} & x_{2} & x_{0}\end{bmatrix} \right)
 ```
-For any $\alpha \ne0$.
+For any $\alpha\ne0$.
 
 <details>
 
@@ -197,19 +262,35 @@ For any $\alpha \ne0$.
 Solution
 </summary>
 
+With Taylor series, you'll run into a conclusion that no terms could exist and $y=a$. That is because scale invariant functions are often not smooth at $x_i=0$ so Taylor series could not capture them. Let us instead look into Laurent Series
+
 ```math
 \begin{aligned}
-g\left(\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix}\right)
-= &
-a
-+b \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}
-+c \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}  x_{ij}
-+d \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{ik}
-+e \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{kj} \\
-&+f \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} \sum_{l=0}^{1} x_{ij}  x_{kl}
-+\ldots
+y=&f\left( \begin{bmatrix}x_{0} & x_{1} &x_{2}\end{bmatrix} \right) \\
+=&\sum_{i=-\infty}^{\infty} \sum_{j=-\infty}^{\infty} \sum_{k=-\infty}^{\infty} c_{ijk} x_0^i x_1^j x_2^k 
 \end{aligned}
 ```
+
+Applying the invariant constraint
+
+```math
+\begin{aligned}
+\sum_{i=-\infty}^{\infty} \sum_{j=-\infty}^{\infty} \sum_{k=-\infty}^{\infty} c_{ijk} x_0^i x_1^j x_2^k 
+=
+\sum_{i=-\infty}^{\infty} \sum_{j=-\infty}^{\infty} \sum_{k=-\infty}^{\infty} \alpha^{i+j+k} c_{ijk} x_0^i x_1^j x_2^k 
+\end{aligned}
+```
+
+This only holds when the coefficients match, that is for any $(i,j,k)$
+```math
+\begin{aligned}
+c_{ijk}=\alpha^{i+j+k} c_{ijk}
+\end{aligned}
+```
+That is for any $(i,j,k)$, either $c_{ijk}=0$ or $i+j+k=0$.
+
+
+
 
 </details>
 
