@@ -18,7 +18,7 @@ In this post, we'll walk through 1) a first principle derivation of the design o
 
 Speaking of permutation invariance, you may already have your faviorite ways to design invariant neural networks for certain types of problems. 
 But here we'll introduce a simple yet general Taylor series-based technique necessary for studying complex equivariance patterns. Specifically, we need to enable efficient universal learners -- that can represent any such invariant or equivariant functions. 
-For advanced readers, the general idea follows [Equivariant Multilayer Perceptrons (EMLP)](https://github.com/mfinzi/equivariant-MLP) with a high-order twist. 
+For advanced readers, the general idea follows [Equivariant Multilayer Perceptrons (EMLP)](https://github.com/mfinzi/equivariant-MLP) but with a high-order twist. 
 
 Given the desired input-output shapes and symmetry constraints, we would proceed as the following: 
 1) Express a general function that matches the input-output shapes in Taylor series form, 
@@ -226,7 +226,7 @@ y=&f\left( \begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix} \right)\\
 \end{aligned}
 ```
 
-Computing the 2nd order term naively would involve $N^2+N$ multiplies for length-$N$ input. A simplification like
+Computing the 2nd order term naively would require $N^2+N$ multiplies for length-$N$ input. A simplification like
 
 ```math
 \begin{aligned}
@@ -289,7 +289,7 @@ This only holds when the coefficients match, that is for any $(i,j,k)$
 c_{ijk}=\alpha^{i+j+k} c_{ijk}
 \end{aligned}
 ```
-That is only terms with $i+j+k=0$ would have non-zero coefficients. For example, $\frac{xy}{z^2}$. Within terms up to order-2, that is $i,j,k\in \left\{ -2,-1,0,1,2 \right\}$, the degrees of freedom is $19$ out of $5^3=125$ as the follows.
+That is only terms with $i+j+k=0$ would have non-zero coefficients. For example, $\frac{xy}{z^2}$. Within terms up to order-2, that is $i,j,k\in \left\{ -2,-1,0,1,2 \right\}$, the degrees of freedom is $19$ out of $5^3=125$ as the following
 
 | (i,j,k) | DoF |
 |:-------:|:---:|
@@ -354,7 +354,7 @@ a = & a \\
 \end{bmatrix} 
 \end{aligned}
 ```
-Solving the equations give
+Solving the equations gives
 ```math
 \begin{aligned}
 \begin{bmatrix}b_0 & b_1\end{bmatrix}=&\begin{bmatrix}b_2 & b_3\end{bmatrix} \\
@@ -379,7 +379,7 @@ Solving the equations give
 \end{bmatrix} 
 \end{aligned}
 ```
-If we view each row of the input as a vectors, the coefficients can be partitioned into blocks that process those vectors, and the row-permutation invariant constraint leads to parameter sharing at the block level. We can parameterize
+If we view the rows of inputs as vectors, the coefficients can be partitioned into blocks that process those vectors, and the row-permutation invariant constraint leads to parameter sharing at the block level. We can parameterize
 
 ```math
 \begin{aligned}
@@ -421,7 +421,7 @@ f&\left( \begin{bmatrix}x_{0} & x_{1}\end{bmatrix}, \begin{bmatrix}x_{2} & x_{3}
 \begin{bmatrix}x_0+x_2 \\ x_1+x_3\end{bmatrix}
 \end{aligned}
 ```
-The size of order-$k$ coefficient blocks for processing length-$H$ latent vectors is $H^k$. This is already much better than the full coefficients $(NH)^k$ for a set of $N$ vectors but stll large. Now the bread and butter of deep learning comes in, namely stacking more layers, low-rank factorization and non-linearities which we'll discuss more in Section II.
+The size of order-$k$ coefficient blocks for processing length-$H$ latent vectors is $H^k$. This is already much better than the full coefficients $(NH)^k$ for a set of $N$ vectors but is still large. Now, the bread and butter of deep learning comes in, namely 1) stacking more layers, 2) low-rank factorization and 3) non-linearities which we'll discuss more in Section II.
 
 </details>
 
@@ -495,7 +495,7 @@ y=&f\left( \begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right
 \end{aligned}
 ```
 
-An interesting pattern emerges, that all terms involved are tensor contractions. In fact, this seems to be true for all flavors of permutation symmetry and the motivation behind Section II. Don't believe it? Try another case below!
+An interesting pattern emerges, that all terms are some forms of tensor contractions. In fact, this seems to be true for all flavors of permutation symmetry and the motivation behind Section II. Don't believe it? Try another case below!
 
 </details>
 
@@ -515,7 +515,7 @@ According to the equivariant constraint, the coefficients of the Taylor series s
 ```math
 \begin{aligned}
 \begin{bmatrix} b_0 & b_1 & b_2 & b_3\end{bmatrix} = &
-\begin{bmatrix} b_3 & b_2 & b_1 & b_0\end{bmatrix} =
+\begin{bmatrix} b_3 & b_2 & b_1 & b_0\end{bmatrix} 
 \\
 \begin{bmatrix} 
     c_{00} & c_{01} & c_{02} & c_{03}\\
@@ -551,7 +551,7 @@ y=&f\left( \begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right
 + \ldots
 \end{aligned}
 ```
-With Hessian symmetry, we may further have $c_1=c_4$ and $c_2=c_7$ which pushes free parameters count down to 9, still 3 more than regular 2D permutation invariance. If you squint really hard (and maybe try Exercise D), there exists a tensor contraction form:
+With Hessian transpose symmetry, we may further have $c_1=c_4$ and $c_2=c_7$ which reduces free parameters count down to 9, still 3 more than regular 2D permutation invariance. If you squint really hard (and maybe try Exercise D), there exists a tensor contraction form:
 ```math
 \begin{aligned}
 f&\left( \{x_{ij}\} \right)\\
@@ -565,7 +565,7 @@ c_0' \sum_i x_{ii}^2
 + \ldots
 \end{aligned}
 ```
-What's different from regular 2D permutation invariance are terms involving diagonal and transpose. Also all tensor contractions here are at or below $O(N)$ compute for input size $\sqrt{N}\times \sqrt{N}$, which is better than $O(N^2)$ for the default Taylor series.
+What's different from regular 2D permutation invariance are terms involving diagonal and transpose. Also all tensor contractions here are at or below $O(N)$ compute for input size $\sqrt{N}\times \sqrt{N}$, which is exponentially less compute than $O(N^2)$ for the default Taylor series.
 
 </details>
 
@@ -623,7 +623,7 @@ b_{20} & b_{21} & b_{22}
  & & \\ 
 \end{bmatrix}
 ```
-Which is identical to the invariant constraints on order-2 terms. In general, the parameterization of equivariant functions up to order-k is very much the same as invariant functions up to order-(k+1). In the case of 1D permutation equivariance, the order-1 parameterization would be
+Which is identical to the invariant constraints on order-2 terms. In general, the parameterization of an equivariant function up to order-k is very much the same as an invariant function up to order-(k+1). In the case of 1D permutation equivariance, the order-1 parameterization would be
 
 ```math
 \begin{aligned}
@@ -658,10 +658,10 @@ Y=&F\left( X \right) \\
 ### I.3 What we have learned so far
 
 In this section, we have learned that
-1) Symmetry constraints reduce number of free parameters.
+1) Symmetry constraints reduce the number of free parameters.
 2) A Taylor-series technique can be used to parameterize symmetric functions.
-3) Certain parameterizations can reduce compute.
-4) Different symmetries can have different impacts on degrees of freedom.
+3) Different symmetries can have different impacts on degrees of freedom.
+4) Certain parameterizations can reduce compute.
 5) Parameterization of equivariant functions are tied to parameterization of invariant functions
 6) Permutation invariant and equivariant functions can be parameterized solely using tensor contraction terms.
 
