@@ -157,7 +157,7 @@ In math terms, the number of free parameters is the dimensionality of the null s
 Although we didn't unroll order-3 and higher terms because they are difficult to visualize, they can still be analyzed with the same approach. Just imagine a cube or a hypercube of parameters, apply the symmetry transformations simultaneously along all dimensions and solve for the parameter sharing pattern.
 
 ### I.2 Exercises
-If you are interested in going a little deeper, test yourself on the following list of exercises and gain new insights.
+If you are interested in going a little deeper, test yourself on the following list of exercises and gain new insights. Click to expand the reference solution. 
 
 **A. 1D translation.** Parameterize function 
 ```math
@@ -665,5 +665,5 @@ In this section, we have learned that
 5) Parameterization of equivariant functions are tied to parameterization of invariant functions
 6) Permutation invariant and equivariant functions can be parameterized solely using tensor contraction terms.
 
-A Taylor series parameterization is sound in theory. In practice however, functions compound and high order interactions are common. Taylor series often provides too little relevant capacity and too much irrelevant capacity to be useful. Engineering is key in the journey to create universal learners of equivariant functions. In the next chapter, we'll focus on permutation symmetry and design a family of practical invariant and equivariant networks for various flavors of permutation symmetry.
+A Taylor series parameterization is sound in theory. In practice however, functions compound and high order interactions are common. Taylor series often provides too little relevant capacity and too much irrelevant capacity to be useful. Engineering is key in the journey to create universal learners of equivariant functions. In the next section, we'll focus on permutation symmetry and design a family of practical invariant and equivariant networks for various flavors of permutation symmetry.
 
