@@ -18,13 +18,14 @@ In this post, we'll walk through 1) a first principle derivation of the design o
 ## I. In Theory: Paramterizing Symmetric Functions in Taylor Series
 
 Speaking of permutation invariance, you may already have your faviorite ways to design invariant neural networks for certain types of problems. 
-But here we'll introduce a simple yet general Taylor series-based technique necessary for studying complex equivariance patterns. Specifically, we aim to design efficient universal learners -- that can represent any such invariant or equivariant functions -- for linear symmetries -- invariance or equivariance to linear transformations on the input. 
+But here we'll introduce a simple yet general Taylor series-based technique necessary for studying complex equivariance patterns. Specifically, we need to enable efficient universal learners -- that can represent any such invariant or equivariant functions. 
 For advanced readers, the general idea follows [Equivariant Multilayer Perceptrons (EMLP)](https://github.com/mfinzi/equivariant-MLP) with a high-order twist. 
 
-The steps are: 
-1) Express a function as a Taylor series, 
-2) Write the symmetry constraint as equations about the coefficients,
-3) Solve the equations for free parameters and the parameter sharing pattern.
+Given the desired input-output shapes and symmetry constraints, we would proceed as the following: 
+1) Express a general function that matches the input-output shapes in Taylor series form, 
+2) Map the symmetry constraints into equations about the Taylor series coefficients,
+3) Solve the equations for free parameters and the parameter sharing patterns, and parameterize the function using the free parameters,
+4) Simplify the parameterization for efficient computation.
 
 Let's start from 1D permutation invariance as an example to demonstrate how the technique works.
 
@@ -65,7 +66,7 @@ f\left(\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2}\end{bmatrix}\right)=f\left(
     \end{bmatrix} 
     \begin{bmatrix}x_{0} \\ x_{1} \\ x_{2}\end{bmatrix}\right)
 ```
-For our Taylor series form, this means that all order-k coefficients need to match. That is for any permutation matrix $P$
+For our Taylor series form, because of the uniqueness of Taylor series, all order-k coefficients on the left hand side need to match the corresponding order-k coefficients on the right hand side. That is for any permutation matrix $P$ we have
 
 ```math
 \begin{aligned}
@@ -150,9 +151,11 @@ y=&f\left( \begin{bmatrix}x_{0} & x_{1} & x_{2}\end{bmatrix} \right)\\
 = & a + b \sum_i x_i + (c_0-c_1) \sum_i x_i^2 + c_1 (\sum_{i}x_i )^2 + \ldots
 \end{aligned}
 ```
-An important effect of this simplification is **reduced compute**. It now requires $O(N)$ compute for $N$ inputs instead of $O(N^2)$ for order-2. 
+An important effect of this simplification is **reduced compute**. It now requires $O(N)$ compute for $N$ inputs instead of $O(N^2)$ for order-2.  
 
 In math terms, the number of free parameters is the dimensionality of the null space of the symmetry constraints. The degrees of freedoms can be numerically calculated from the basis of this null space which is one of the many innovations in [1]. But note that as the basis is often not unique, numerical solvers tend to return linear combinations instead of simple terms, which makes it difficult to simplify. So there is still some fun in manual analysis.
+
+Although we didn't unroll order-3 and higher terms due to visualization difficulties, they can still be analyzed in the same way, just imagine a cube or a hypercube of parameters, and applying the same transformations simultaneously along all dimensions. 
 
 ### I.2 Exercises
 If you are interested in going a little deeper, test yourself on a list of exercises for new insights.
@@ -581,17 +584,74 @@ For any permutation $P$.
 Solution
 </summary>
 
-The Taylor series can be expressed as
+The Taylor series up to order 1 can be expressed as
 ```math
 \begin{aligned}
 &\begin{bmatrix}y_{0} \\ y_{1} \\y_{2}\end{bmatrix}=F\left( \begin{bmatrix}x_{0} \\ x_{1} \\ x_{2}\end{bmatrix} \right) \\
 &=\begin{bmatrix}a_0 \\ a_1 \\a_2\end{bmatrix}
 + 
-
-
-
+\begin{bmatrix}
+b_{00} & b_{01} & b_{02} \\ 
+b_{10} & b_{11} & b_{12} \\
+b_{20} & b_{21} & b_{22}
+\end{bmatrix}
+\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2}\end{bmatrix} 
++
+\ldots
 \end{aligned}
 ```
+The equivariant constraints are for any $P$
+```math
+\begin{bmatrix}
+b_{00} & b_{01} & b_{02} \\ 
+b_{10} & b_{11} & b_{12} \\
+b_{20} & b_{21} & b_{22}
+\end{bmatrix}
+=
+\begin{bmatrix}
+ & & \\ 
+ & P^T & \\ 
+ & & \\ 
+\end{bmatrix}
+\begin{bmatrix}
+b_{00} & b_{01} & b_{02} \\ 
+b_{10} & b_{11} & b_{12} \\
+b_{20} & b_{21} & b_{22}
+\end{bmatrix}
+\begin{bmatrix}
+ & & \\ 
+ & P & \\ 
+ & & \\ 
+\end{bmatrix}
+```
+Which is identical to the invariant constraints on order-2 terms. In general, the parameterization of equivariant functions up to order-k is very much the same as invariant functions up to order-(k+1). In the case of 1D permutation equivariance, the order-1 parameterization would be
+
+```math
+\begin{aligned}
+&\begin{bmatrix}y_{0} \\ y_{1} \\y_{2}\end{bmatrix}=F\left( \begin{bmatrix}x_{0} \\ x_{1} \\ x_{2}\end{bmatrix} \right) \\
+&=\begin{bmatrix}a \\ a \\a\end{bmatrix}
++ 
+\begin{bmatrix}
+b_{0} & b_{1} & b_{1} \\ 
+b_{1} & b_{0} & b_{1} \\
+b_{1} & b_{1} & b_{0}
+\end{bmatrix}
+\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2}\end{bmatrix} 
++
+\ldots
+\end{aligned}
+```
+Rewriting in tensor contraction form using [einsum](https://pytorch.org/docs/stable/generated/torch.einsum.html) notations
+
+```math
+\begin{aligned}
+Y=&F\left( X \right) \\
+=& a \cdot \text{einsum(`i->i',X)} 
++ (b_0-b_1) \cdot \text{einsum(`i,i->i',X,X)} \\
+&+ b_1 \cdot \text{einsum(`i,j->i',X,X)} 
+\end{aligned} 
+```
+
 
 </details>
 
@@ -602,7 +662,9 @@ In this section, we have learned that
 1) Symmetry constraints reduce number of free parameters.
 2) A Taylor-series technique can be used to parameterize symmetric functions.
 3) Certain parameterizations can reduce compute.
-4) Different symmetries have different impact on degrees of freedom.
+4) Different symmetries can have different impacts on degrees of freedom.
+5) Parameterization of equivariant functions are tied to parameterization of invariant functions
+6) Permutation invariant functions can be parameterized solely using tensor contraction terms.
 
 
 
