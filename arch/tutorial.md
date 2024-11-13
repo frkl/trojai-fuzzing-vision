@@ -157,7 +157,7 @@ In math terms, the number of free parameters is the dimensionality of the null s
 ### I.2 Exercises
 If you are interested in going a little deeper, test yourself on a list of exercises for new insights.
 
-**1D translation.** Parameterize function 
+**A. 1D translation.** Parameterize function 
 ```math
 y=f\left( \begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix} \right) =f\left( \begin{bmatrix} x_{3} & x_{0} & x_{1} & x_{2}\end{bmatrix} \right)
 ```
@@ -250,7 +250,7 @@ In the spirit of the [Butterfly Algorithm](https://en.wikipedia.org/wiki/Butterf
 </details>
 
 
-**Scale.** Parameterize function 
+**B. Scale.** Parameterize function 
 ```math
 y=f\left( \begin{bmatrix}x_{0} & x_{1} &x_{2}\end{bmatrix} \right) =f\left(\alpha \begin{bmatrix}x_{1} & x_{2} & x_{0}\end{bmatrix} \right)
 ```
@@ -287,16 +287,41 @@ This only holds when the coefficients match, that is for any $(i,j,k)$
 c_{ijk}=\alpha^{i+j+k} c_{ijk}
 \end{aligned}
 ```
-That is for any $(i,j,k)$, either $c_{ijk}=0$ or $i+j+k=0$.
+That is only terms with $i+j+k=0$ would have non-zero coefficients. For example, $\frac{xy}{z^2}$. Within terms up to order-2, that is $i,j,k\in \left\{ -2,-1,0,1,2 \right\}$, the degrees of freedom is $19$ out of $5^3=125$ as the follows.
 
+| (i,j,k) | DoF |
+|:-------:|:---:|
+| 0,0,0   | 1   |
+| -1,0,1  | 6   |
+| -2,0,2  | 6   |
+| -2,1,1  | 3   |
+| 2,-1,-1 | 3   |
 
+The full parameterization is
+```math
+\begin{aligned}
+f&\left( \begin{bmatrix}x_{0} & x_{1} &x_{2}\end{bmatrix} \right) \\
+=&a + \sum_{i}\sum_{j\ne i} b_{ij} \frac{x_i}{x_j} + \sum_{i}\sum_{j\ne i} c_{ij} \frac{x_i^2}{x_j^2} + d_0 \frac{x_1 x_2}{x_0^2} + d_1 \frac{x_0 x_2}{x_1^2} + d_2 \frac{x_0 x_1}{x_2^2} + e_0 \frac{x_0^2}{x_1 x_2} + e_1 \frac{x_1^2}{x_0 x_2} + e_2 \frac{x_2^2}{x_0 x_1} 
+\end{aligned}
+```
 
+Nevertheless, for scale invariance it is easier to reparameterize the input with
+```math
+z_0=\frac{x_0}{\sqrt{x_0^2+x_1^2+x_2^2}} \quad
+z_1=\frac{x_1}{\sqrt{x_0^2+x_1^2+x_2^2}} \quad
+z_2=\frac{x_2}{\sqrt{x_0^2+x_1^2+x_2^2}}
+```
+and express
+
+```math
+y=f\left( \begin{bmatrix}x_{0} & x_{1} &x_{2}\end{bmatrix} \right) =g\left(z_1,z_2\right)
+```
 
 </details>
 
-**1D permutation with latent.** Parameterize function 
+**C. 1D permutation with latent.** Parameterize function 
 ```math
-y=f\left( \begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right) =f\left( \begin{bmatrix}0 & 1 \\ 1 & 0\end{bmatrix}\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right)
+y=f\left( \begin{bmatrix}x_{0} & x_{1} \\ x_{2} & x_{3}\end{bmatrix} \right) =f\left( \begin{bmatrix}0 & 1 \\ 1 & 0\end{bmatrix}\begin{bmatrix}x_{0} & x_{1} \\ x_{2} & x_{3}\end{bmatrix} \right)
 ```
 
 <details>
@@ -305,23 +330,100 @@ y=f\left( \begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right)
 Solution
 </summary>
 
+According to the equivariant constraint, the coefficients of the Taylor series satisfy
 ```math
 \begin{aligned}
-g\left(\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix}\right)
-= &
-a
-+b \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}
-+c \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}  x_{ij}
-+d \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{ik}
-+e \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{kj} \\
-&+f \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} \sum_{l=0}^{1} x_{ij}  x_{kl}
-+\ldots
+a = & a \\
+\begin{bmatrix} b_0 & b_1 & b_2 & b_3\end{bmatrix}  = &
+\begin{bmatrix} b_2 & b_3 & b_0 & b_1\end{bmatrix} 
+\\
+\begin{bmatrix} 
+    c_{00} & c_{01} & c_{02} & c_{03}\\
+    c_{10} & c_{11} & c_{12} & c_{13}\\
+    c_{20} & c_{21} & c_{22} & c_{23}\\
+    c_{30} & c_{31} & c_{32} & c_{33}
+\end{bmatrix} 
+=& 
+\begin{bmatrix} 
+    c_{22} & c_{23} & c_{20} & c_{21} \\
+    c_{32} & c_{33} & c_{30} & c_{31} \\
+    c_{02} & c_{03} & c_{00} & c_{01} \\
+    c_{12} & c_{13} & c_{10} & c_{11} \\
+\end{bmatrix} 
 \end{aligned}
 ```
+Solving the equations give
+```math
+\begin{aligned}
+\begin{bmatrix}b_0 & b_1\end{bmatrix}=&\begin{bmatrix}b_2 & b_3\end{bmatrix} \\
+
+\begin{bmatrix} 
+    c_{00} & c_{01} \\
+    c_{10} & c_{11} \\
+\end{bmatrix} 
+=&
+\begin{bmatrix} 
+    c_{22} & c_{23} \\
+    c_{32} & c_{33} \\
+\end{bmatrix}  \\
+\begin{bmatrix} 
+    c_{02} & c_{03} \\
+    c_{12} & c_{13} \\
+\end{bmatrix} 
+=&
+\begin{bmatrix} 
+    c_{20} & c_{21} \\
+    c_{30} & c_{31} \\
+\end{bmatrix} 
+\end{aligned}
+```
+If we view each row of the input as a vectors, the coefficients can be partitioned into blocks that process those vectors, and the row-permutation invariant constraint leads to parameter sharing at the block level. We can parameterize
+
+```math
+\begin{aligned}
+f&\left( \begin{bmatrix}x_{0} & x_{1}\end{bmatrix}, \begin{bmatrix}x_{2} & x_{3}\end{bmatrix} \right) \\
+=&a + 
+\begin{bmatrix}b_{0} & b_{1}\end{bmatrix}
+\begin{bmatrix}x_{0}+x_2 \\ x_{1}+x_3\end{bmatrix}
++ 
+\begin{bmatrix}x_{0} & x_{1}\end{bmatrix}
+\begin{bmatrix}c_0 & c_1\\c_2 & c_3\end{bmatrix}
+\begin{bmatrix}x_{0} \\ x_{1}\end{bmatrix}
++ 
+\begin{bmatrix}x_{2} & x_{3}\end{bmatrix}
+\begin{bmatrix}c_0 & c_1\\c_2 & c_3\end{bmatrix}
+\begin{bmatrix}x_{2} \\ x_{3}\end{bmatrix}
+\\
+&+ 
+\begin{bmatrix}x_{0} & x_{1}\end{bmatrix}
+\begin{bmatrix}d_0 & d_1\\d_2 & d_3\end{bmatrix}
+\begin{bmatrix}x_{2} \\ x_{3}\end{bmatrix}
++ 
+\begin{bmatrix}x_{2} & x_{3}\end{bmatrix}
+\begin{bmatrix}d_0 & d_1\\d_2 & d_3\end{bmatrix}
+\begin{bmatrix}x_{0} \\ x_{1}\end{bmatrix}\\
+=&a + 
+\begin{bmatrix}b_{0} & b_{1}\end{bmatrix}
+\begin{bmatrix}x_0+x_2 \\ x_1+x_3\end{bmatrix}
++ 
+\begin{bmatrix}x_{0} & x_{1}\end{bmatrix}
+\begin{bmatrix}c_0' & c_1'\\c_2' & c_3'\end{bmatrix}
+\begin{bmatrix}x_{0} \\ x_{1}\end{bmatrix}
++ 
+\begin{bmatrix}x_{2} & x_{3}\end{bmatrix}
+\begin{bmatrix}c_0' & c_1'\\c_2' & c_3'\end{bmatrix}
+\begin{bmatrix}x_{2} \\ x_{3}\end{bmatrix}\\
+&+ 
+\begin{bmatrix}x_0+x_2 & x_1+x_3\end{bmatrix}
+\begin{bmatrix}d_0 & d_1\\d_2 & d_3\end{bmatrix}
+\begin{bmatrix}x_0+x_2 \\ x_1+x_3\end{bmatrix}
+\end{aligned}
+```
+The size of order-$k$ coefficient blocks for processing length-$H$ latent vectors is $H^k$. This is already much better than the full coefficients $(NH)^k$ for a set of $N$ vectors but stll large. Now the bread and butter of deep learning comes in, namely stacking more layers, low-rank factorization and non-linearities which we'll discuss more in Section II.
 
 </details>
 
-**2D permutation.** Parameterize function 
+**D. 2D permutation.** Parameterize function 
 ```math
 y=f\left( \begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right) =f\left( \begin{bmatrix}0 & 1 \\ 1 & 0\end{bmatrix}\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right) = f\left(\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix}\begin{bmatrix}0 & 1 \\ 1 & 0\end{bmatrix} \right)
 ```
@@ -332,24 +434,141 @@ y=f\left( \begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right)
 Solution
 </summary>
 
+According to the equivariant constraint, the coefficients of the Taylor series satisfy
 ```math
 \begin{aligned}
-g\left(\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix}\right)
-= &
-a
-+b \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}
-+c \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}  x_{ij}
-+d \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{ik}
-+e \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{kj} \\
-&+f \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} \sum_{l=0}^{1} x_{ij}  x_{kl}
-+\ldots
+\begin{bmatrix} b_0 & b_1 & b_2 & b_3\end{bmatrix} = &
+\begin{bmatrix} b_2 & b_3 & b_0 & b_1\end{bmatrix} =
+\begin{bmatrix} b_1 & b_0 & b_3 & b_2\end{bmatrix} 
+\\
+\begin{bmatrix} 
+    c_{00} & c_{01} & c_{02} & c_{03}\\
+    c_{10} & c_{11} & c_{12} & c_{13}\\
+    c_{20} & c_{21} & c_{22} & c_{23}\\
+    c_{30} & c_{31} & c_{32} & c_{33}
+\end{bmatrix} 
+=& 
+\begin{bmatrix} 
+    c_{22} & c_{23} & c_{20} & c_{21} \\
+    c_{32} & c_{33} & c_{30} & c_{31} \\
+    c_{02} & c_{03} & c_{00} & c_{01} \\
+    c_{12} & c_{13} & c_{10} & c_{11} \\
+\end{bmatrix} 
+=
+\begin{bmatrix} 
+    c_{11} & c_{10} & c_{13} & c_{12} \\
+    c_{01} & c_{00} & c_{03} & c_{02} \\
+    c_{31} & c_{30} & c_{33} & c_{32} \\
+    c_{21} & c_{20} & c_{23} & c_{22} \\
+\end{bmatrix} 
 \end{aligned}
 ```
+
+Solving the equations gives the following parameterization with 6 degrees of freedom
+```math
+\begin{aligned}
+y=&f\left( \begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right)\\
+= & a + 
+\begin{bmatrix} b & b & b &b\end{bmatrix} 
+\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11} \end{bmatrix} +
+\begin{bmatrix} x_{00} & x_{01} & x_{10} & x_{11}\end{bmatrix}
+\begin{bmatrix} 
+    c_{0} & c_{1} & c_{2} & c_{3}\\
+    c_{1} & c_{0} & c_{3} & c_{2}\\
+    c_{2} & c_{3} & c_{0} & c_{1}\\
+    c_{3} & c_{2} & c_{1} & c_{0}
+\end{bmatrix} 
+\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11} \end{bmatrix}
++ \ldots
+\end{aligned}
+```
+
+Let us perform a bit of merging and simplification
+```math
+\begin{aligned}
+y=&f\left( \begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right)\\
+= & a + b \sum_i \sum_j x_{ij} + (c_0-c_1-c_2-c_3) \sum_i \sum_j x_{ij}^2\\
+&+ (c_1-c_3) \sum_i (\sum_j x_{ij})^2+(c_2-c_3) \sum_j (\sum_i x_{ij})^2  + c_3 (\sum_i \sum_j x_{ij})^2
++ \ldots
+\end{aligned}
+```
+
+An interesting pattern emerges, that all terms involved are tensor contractions. In fact, this seems to be true for all flavors of permutation symmetry and the motivation behind Section II. Don't believe it? Try another case below!
 
 </details>
 
 
-**1D permutation equivariance.** Parameterize function 
+**E. 2D joint permutation.** Parameterize function 
+```math
+y=f\left( \begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right) =f\left( \begin{bmatrix}0 & 1 \\ 1 & 0\end{bmatrix}\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \begin{bmatrix}0 & 1 \\ 1 & 0\end{bmatrix}\right)
+```
+
+<details>
+
+<summary> 
+Solution
+</summary>
+
+According to the equivariant constraint, the coefficients of the Taylor series satisfy
+```math
+\begin{aligned}
+\begin{bmatrix} b_0 & b_1 & b_2 & b_3\end{bmatrix} = &
+\begin{bmatrix} b_3 & b_2 & b_1 & b_0\end{bmatrix} =
+\\
+\begin{bmatrix} 
+    c_{00} & c_{01} & c_{02} & c_{03}\\
+    c_{10} & c_{11} & c_{12} & c_{13}\\
+    c_{20} & c_{21} & c_{22} & c_{23}\\
+    c_{30} & c_{31} & c_{32} & c_{33}
+\end{bmatrix} 
+=& 
+\begin{bmatrix} 
+    c_{33} & c_{32} & c_{31} & c_{30} \\
+    c_{23} & c_{22} & c_{21} & c_{20} \\
+    c_{13} & c_{12} & c_{11} & c_{10} \\
+    c_{03} & c_{02} & c_{01} & c_{00} \\
+\end{bmatrix} 
+\end{aligned}
+```
+
+Solving the equations gives the following parameterization with 11 degrees of freedom
+```math
+\begin{aligned}
+y=&f\left( \begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right)\\
+= & a + 
+\begin{bmatrix} b_0 & b_1 & b_1 &b_0\end{bmatrix} 
+\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11} \end{bmatrix} +
+\begin{bmatrix} x_{00} & x_{01} & x_{10} & x_{11}\end{bmatrix}
+\begin{bmatrix} 
+    c_{0} & c_{1} & c_{2} & c_{3}\\
+    c_{4} & c_{5} & c_{6} & c_{7}\\
+    c_{7} & c_{6} & c_{5} & c_{4}\\
+    c_{3} & c_{2} & c_{1} & c_{0}
+\end{bmatrix} 
+\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11} \end{bmatrix}
++ \ldots
+\end{aligned}
+```
+With Hessian symmetry, we may further have $c_1=c_4$ and $c_2=c_7$ which pushes free parameters count down to 9, still 3 more than regular 2D permutation invariance. If you squint really hard (and maybe try Exercise D), there exists a tensor contraction form:
+```math
+\begin{aligned}
+f&\left( \{x_{ij}\} \right)\\
+= & a + b_0' \sum_i x_{ii} + b_1' \sum_i \sum_j x_{ij} + 
+c_0' \sum_i x_{ii}^2 
++ c_1' \sum_i x_{ii}\sum_j x_{ij} \\
+&+ c_2' \sum_i x_{ii}\sum_j x_{ji} 
++ c_3' \sum_i x_{ii}\sum_j x_{jj}
++ c_5' \sum_i \sum_j x_{ij}^2
++ c_6' \sum_i \sum_j x_{ij} x_{ji}  
++ \ldots
+\end{aligned}
+```
+What's different from regular 2D permutation invariance are terms involving diagonal and transpose. Also all tensor contractions here are at or below $O(N)$ compute for input size $\sqrt{N}\times \sqrt{N}$, which is better than $O(N^2)$ for the default Taylor series.
+
+</details>
+
+
+**F. 1D permutation equivariance.** Parameterize function 
 ```math
 \begin{bmatrix}y_{0} \\ y_{1} \\y_{2}\end{bmatrix}=F\left( \begin{bmatrix}x_{0} \\ x_{1} \\ x_{2}\end{bmatrix} \right) =F\left( \begin{bmatrix}&&\\&P&\\&&\end{bmatrix}\begin{bmatrix}x_{0} \\ x_{1} \\ x_{2}\end{bmatrix} \right)
 ```
@@ -362,17 +581,15 @@ For any permutation $P$.
 Solution
 </summary>
 
+The Taylor series can be expressed as
 ```math
 \begin{aligned}
-g\left(\begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix}\right)
-= &
-a
-+b \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}
-+c \sum_{i=0}^{1} \sum_{j=0}^{1} x_{ij}  x_{ij}
-+d \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{ik}
-+e \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} x_{ij}  x_{kj} \\
-&+f \sum_{i=0}^{1} \sum_{j=0}^{1} \sum_{k=0}^{1} \sum_{l=0}^{1} x_{ij}  x_{kl}
-+\ldots
+&\begin{bmatrix}y_{0} \\ y_{1} \\y_{2}\end{bmatrix}=F\left( \begin{bmatrix}x_{0} \\ x_{1} \\ x_{2}\end{bmatrix} \right) \\
+&=\begin{bmatrix}a_0 \\ a_1 \\a_2\end{bmatrix}
++ 
+
+
+
 \end{aligned}
 ```
 
