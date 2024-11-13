@@ -103,7 +103,7 @@ a = & a \\
 & \ldots
 \end{aligned}
 ```
-Which are all linear equations about coefficients $a$, $b_i$ and $c_{ij}$. So we can just enumerate all $P$ to get all the equations, and then solve them. For $b_i$ for example, enumerating different permutations $P$ would give
+These equations are all linear equations about coefficients $a$, $b_i$ and $c_{ij}$. So we can just enumerate all $P$ to get all the equations, and then solve them. For $b_i$ for example, enumerating different permutations $P$ would give
 
 ```math
 \begin{bmatrix} b_0 \\ b_1 \\ b_2\end{bmatrix}  = 
@@ -114,7 +114,7 @@ Which are all linear equations about coefficients $a$, $b_i$ and $c_{ij}$. So we
 \begin{bmatrix} b_2 \\ b_1 \\ b_0\end{bmatrix} 
 ```
 
-Which is more than enough to say $b_0=b_1=b_2$. So the order-1 term has only 1 degree of freedom.
+That is more than enough to say $b_0=b_1=b_2$. So the order-1 term has only 1 degree of freedom.
 
 For $c_i$ there are more equations, but it turns out that solving the equations across all permutations would yield 
 ```math
@@ -141,7 +141,7 @@ y=&f\left( \begin{bmatrix}x_{0} & x_{1} & x_{2}\end{bmatrix} \right)\\
 + \ldots
 \end{aligned}
 ```
-For a total of 4 free parameters up to order 2, instead of 13 free parameters without the invariance constraint. More generally, for $N$ inputs, we still only need 4 parameters instead of $N^2+N+1$ parameters. So parameterizing with symmetry can sometimes **reduce parameter count** exponentially. 
+For a total of 4 free parameters up to order 2, instead of 13 free parameters without the invariance constraint. More generally, for $N$ inputs, we still only need 4 parameters to express any permutation invariant function, whereas a non-invariant function needs $N^2+N+1$ parameters. In practice, parameterizing with symmetry often **reduces parameter count** exponentially. 
 
 We can further simplify by focusing on the free parameters
 ```math
@@ -153,12 +153,12 @@ y=&f\left( \begin{bmatrix}x_{0} & x_{1} & x_{2}\end{bmatrix} \right)\\
 ```
 An important effect of this simplification is **reduced compute**. It now requires $O(N)$ compute for $N$ inputs instead of $O(N^2)$ for order-2.  
 
-In math terms, the number of free parameters is the dimensionality of the null space of the symmetry constraints. The degrees of freedoms can be numerically calculated from the basis of this null space which is one of the many innovations in [1]. But note that as the basis is often not unique, numerical solvers tend to return linear combinations instead of simple terms, which makes it difficult to simplify. So there is still some fun in manual analysis.
+In math terms, the number of free parameters is the dimensionality of the null space of the symmetry equations. The free parameters can be numerically solved from the basis of this null space which is one of the many innovations in [1]. But note that as the basis is often not unique, numerical solutions can vary by a linear combination and therefore may not be compute-optimal, so further simplification is still needed.
 
-Although we didn't unroll order-3 and higher terms due to visualization difficulties, they can still be analyzed in the same way, just imagine a cube or a hypercube of parameters, and applying the same transformations simultaneously along all dimensions. 
+Although we didn't unroll order-3 and higher terms because they are difficult to visualize, they can still be analyzed with the same approach. Just imagine a cube or a hypercube of parameters, apply the symmetry transformations simultaneously along all dimensions and solve for the parameter sharing pattern.
 
 ### I.2 Exercises
-If you are interested in going a little deeper, test yourself on a list of exercises for new insights.
+If you are interested in going a little deeper, test yourself on the following list of exercises and gain new insights.
 
 **A. 1D translation.** Parameterize function 
 ```math
@@ -664,9 +664,9 @@ In this section, we have learned that
 3) Certain parameterizations can reduce compute.
 4) Different symmetries can have different impacts on degrees of freedom.
 5) Parameterization of equivariant functions are tied to parameterization of invariant functions
-6) Permutation invariant functions can be parameterized solely using tensor contraction terms.
+6) Permutation invariant and equivariant functions can be parameterized solely using tensor contraction terms.
 
-
+A Taylor series parameterization is sound in theory. In practice however, functions compound and high order interactions are common. Taylor series often provides too little relevant capacity and too much irrelevant capacity to be useful. Engineering is key in the journey to create universal learners of equivariant functions. In the next chapter, we'll focus on permutation symmetry and design a family of practical invariant and equivariant networks for various flavors of permutation symmetry.
 
 
 ## II n-D permutation symmetry
