@@ -1,7 +1,7 @@
 # Einsum Pooling: nD permutation symmetric neural nets from the ground up
 
 
-## II Engineering Networks with nD Permutation Symmetry
+## II Engineering a Network with Permutation Symmetry
 
 From matrices to sets to symbolic processing, permutation symmetry is found in many problems and requires extra attention during modeling. When handled properly however, permutation symmetry is also a blessing. As we have learned in the previous section, if parameterized properly, permutation symmetry has the potential to exponentially reduce parameter count and compute for highly efficient learning. At the other end of the spectrum, reciting the success recipe of deep learning, we can scale the latent dimension and stack equivariant layers to create exponentially more expressive networks at the same parameter count and compute as a regular network.
 
@@ -29,6 +29,7 @@ Multiple dimensions, co-permutation and dependency are common themes here. To ai
 
 
 ### II.2 Permutation symmetry and einsums
+
 
 
 
