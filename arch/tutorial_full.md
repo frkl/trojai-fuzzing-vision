@@ -556,7 +556,7 @@ y=&f\left( \begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right
 + \ldots
 \end{aligned}
 ```
-With Hessian transpose symmetry, we may further have $`c_1=c_4`$ and $`c_2=c_7`$ which reduces free parameters count down to 9, still 3 more than regular 2D permutation invariance. If you squint really hard (and maybe try Exercise D), there exists a tensor contraction form:
+With Hessian transpose symmetry, we may further have  which reduces free parameters count down to 9, still 3 more than regular 2D permutation invariance. If you squint really hard (and maybe try Exercise D), there exists a tensor contraction form:
 ```math
 \begin{aligned}
 f&\left( \{x_{ij}\} \right)\\
@@ -571,7 +571,7 @@ c_0' \sum_i x_{ii}^2
 \end{aligned}
 ```
 
-What's different from regular 2D permutation invariance are terms involving diagonal and transpose. Also all tensor contractions here are at or below $`O(N)`$ compute for input size $`\sqrt{N}\times \sqrt{N}`$, which is exponentially less compute than $`O(N^2)`$ for the default Taylor series.
+What's different from regular 2D permutation invariance are terms involving diagonal and transpose. Also all tensor contractions here are at or below  for the default Taylor series.
 
 </details>
 
