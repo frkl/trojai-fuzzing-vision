@@ -1,65 +1,13 @@
 # Einsum Pooling: nD permutation symmetric neural nets from the ground up
 
 
+
 ## III Use cases
 
-### $X_{ab}$-type symmetry for matrix inverse
-
-```python
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-#Implements the following pooling terms: 'ZabY->ZabY', 'ZabY->ZacY', 'ZacY->ZbcY', 'ZacY->ZbdY', 'ZacY,ZadY,ZbcY->ZbdY', 'ZacY,ZadY,ZaeY,ZbcY,ZbdY->ZbeY', 'ZadY,ZaeY,ZbdY,ZbeY,ZcdY->ZceY'
-class einpool_ab(nn.Module):
-    Kin=17
-    Kout=7
-    def forward(self,x):
-        N,M,KH=x.shape[-3:]
-        H=KH//17
-        x=x.split(H,dim=-1)
-        y0=x[0]
-        y1=x[1].sum(-2,keepdim=True).repeat(1,M,1)
-        y2=x[2].sum(-3,keepdim=True).repeat(N,1,1)
-        y3=x[3].sum([-2,-3],keepdim=True).repeat(N,M,1)
-        y4=torch.einsum('acH,adY,bcH->bdH',x[4],x[5],x[6])
-        y5=torch.einsum('acH,bcH,adH,bdH,aeH->beH',x[7],x[8],x[9],x[10],x[11])
-        y6=torch.einsum('adH,aeH,bdH,beH,cdH->ceH',x[12],x[13],x[14],x[15],x[16])
-        y=torch.cat((y0,y1,y2,y3,y4,y5,y6),dim=-1)
-        return y
-
-#2-layer mlp
-def mlp2(ninput,nh,noutput):
-    return nn.Sequential(nn.Linear(ninput,nh),nn.GELU(),nn.Linear(nh,noutput))
-
-class einnet(nn.Module):
-    def __init__(self,ninput,nh0,nh,noutput,nstacks,pool):
-        super().__init__()
-        assert nstacks>=2
-        self.t=nn.ModuleList()
-        self.t.append(mlp2(ninput,nh,nh0*pool.Kin))
-        for i in range(nstacks-2):
-            self.t.append(mlp2(nh0*pool.Kout,nh,nh0*pool.Kin))
-        
-        self.t.append(mlp2(nh0*pool.Kout,nh,noutput))
-        self.pool=pool
-    
-    def forward(self,x):
-        h=self.t[0](x)
-        for i in range(1,len(self.t)):
-            hi=F.softmax(h.view(*h.shape[:-3],-1,h.shape[-1]),dim=-2).view(*h.shape)
-            hi=self.t[i](self.pool(hi))
-            if i<len(self.t)-1:
-                h=h+hi
-            else:
-                h=hi
-        
-        return h
-
-```
+### III.1 $X_{ab}$-type symmetry for matrix inverse
 
 
-### $X_{aa}$-type symmetry for knowledge graph completion
+### III.2 $X_{aa}$-type symmetry for knowledge graph completion
 
 Knowledge graph completion is another problem class where nD permutation symmetry is helpful. 
 
@@ -291,19 +239,13 @@ for i in range(1000000):
 There have you, we've designed and verified an nD permutation symmetric network from the basic principles. The same bottom-up approach is applicable to many other types of symmetries, such as translation, scale, rotation. 
 Interestingly, different types of symmetry lead to different rate of parameter sharing, and permutation symmetry is one that leads to a greater rate of parameter reduction. 
 
-Another important. Our finding echoes an observation made by a recent work, that symmetric networks, while having fewer parameters, may not reduce compute. 
-
 
 Designing general equivariant / invariant networks has been a hot topic. In fact, prior works [Max welling] discussed how to parameterize a linear layer given arbitrary linear transformations. ....  
 Many network designs for specific types of nD permutation symmetry have also been proposed previously, such as . The use cases in our post are inspired by the [] work and a comment in its reviews. 
 We'd like to encourage curious readers to read those works as well.
 
 
-
-
-
-
-Although simple as it seems, 
+ 
 
 ## Related readings
 

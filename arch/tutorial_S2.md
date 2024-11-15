@@ -132,7 +132,7 @@ The following is a quick lookup table of pooling operations for a few common equ
 |               | 3+    | No need  |
 
 
-Did you know: `'ab,cb,cd->ad'` which is linear self-attention is an order-3 term for `ab`-type equivariance. Self-attention operation by itself is equivariant to not only token permutation but also latent permutation, although other linear layers in the transformer architecture do not retain the latent symmetry.
+*Did you know: `'ab,cb,cd->ad'` which is linear self-attention is an order-3 term for `ab`-type equivariance. Self-attention operation by itself is equivariant to not only token permutation but also latent permutation, although other linear layers in the transformer architecture do not retain the latent symmetry.*
 
 
 ### II.3 Putting everything together: The Equivariant Einsum Network
@@ -152,5 +152,104 @@ Another consideration in practice is [einsum path optimization](https://numpy.or
 Putting it all together, here is a reference Pytorch implementation of an Equivariant Einsum Network that would served as the backbone, to be followed by averaging for dimensions that need invariance. 
 
 ```python
-#some code here
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+#Implements minimal aH-type pooling
+class einpool_a(nn.Module):
+    fan_in=4
+    fan_out=3
+    ndims=1
+    def forward(self,x_):
+        x=x_.view(-1,*x_.shape[-2:]) # Apply pooling only to the last 2 dims, supposedly `aH`
+        N,KH=x.shape[-3:]
+        H=KH//self.fan_in
+        x=x.split(H,dim=-1)
+        y0=x[0]
+        y1=x[1].sum(-2,keepdim=True).repeat(1,N,1)
+        y2=x[2]*x[3]
+        y=torch.cat((y0,y1,y2),dim=-1)
+        y=y.view(*x_.shape[:-1],-1) #Recover original tensor shape
+        return y
+
+#Implements minimal aaH-type pooling
+class einpool_aa(nn.Module):
+    fan_in=8
+    fan_out=6
+    ndims=2
+    def forward(self,x_):
+        x=x_.view(-1,*x_.shape[-3:]) # Apply pooling only to the last 3 dims, supposedly `aaH`
+        N,M,KH=x.shape[-3:]
+        H=KH//self.fan_in
+        x=x.split(H,dim=-1)
+        y0=x[0]
+        y1=x[1].diagonal(dim1=-2,dim2=-3).diag_embed(dim1=-2,dim2=-3)
+        y2=x[2].transpose(-2,-3)
+        y3=x[3].sum(-2,keepdim=True).repeat(1,1,M,1)
+        y4=x[4]*x[5]
+        y5=torch.einsum('ZabH,ZbcH->ZacH',x[6],x[7])
+        y=torch.cat((y0,y1,y2,y3,y4,y5),dim=-1)
+        y=y.view(*x_.shape[:-1],-1) #Recover original tensor shape
+        return y
+
+#Implements order-3 abH-type pooling
+class einpool_ab(nn.Module):
+    fan_in=8
+    fan_out=5
+    ndims=2
+    def forward(self,x_):
+        x=x_.view(-1,*x_.shape[-3:]) # Apply pooling only to the last 3 dims, supposedly `abH`
+        N,M,KH=x.shape[-3:]
+        H=KH//self.fan_in
+        x=x.split(H,dim=-1)
+        y0=x[0]
+        y1=x[1].sum(-2,keepdim=True).repeat(1,1,M,1)
+        y2=x[2].sum(-3,keepdim=True).repeat(1,N,1,1)
+        y3=x[3]*x[4]
+        y4=torch.einsum('ZacH,ZbcH,ZadH->ZbdH',x[5],x[6],x[7])
+        y=torch.cat((y0,y1,y2,y3,y4),dim=-1)
+        y=y.view(*x_.shape[:-1],-1) #Recover original tensor shape
+        return y
+
+#2-layer mlp with GELU
+def mlp2(ninput,nh,noutput):
+    return nn.Sequential(nn.Linear(ninput,nh),nn.GELU(),nn.Linear(nh,noutput))
+
+#Equivariant EinNet backbone
+class einnet(nn.Module):
+    #Instantiate the network
+    #    ninput/noutput -- number of input/output dimensions
+    #    nh0 -- pooling dimensions, like head_dim in transformers
+    #    nh -- latent dimensions 
+    #    nstacks -- number of einsum pooling stacks
+    #    pool -- einsum pooling operation. Needs to provide fan_in, 
+    #            fan_out factors, and ndims
+    def __init__(self,ninput,nh0,nh,noutput,nstacks,pool):
+        super().__init__()
+        self.t=nn.ModuleList()
+        self.t.append(mlp2(ninput,nh,nh0*pool.fan_in))
+        for i in range(nstacks-1):
+            self.t.append(mlp2(nh0*pool.fan_out,nh,nh0*pool.fan_in))
+        
+        self.t.append(mlp2(nh0*pool.fan_out,nh,noutput))
+        self.pool=pool
+    
+    # Forward call
+    #    x: tensor shape matches equivariance type, e.g. *abH
+    def forward(self,x):
+        h=self.t[0](x)
+        for i in range(1,len(self.t)):
+            hi=F.softmax(h.view(*h.shape[:-self.pool.ndims-1],-1,h.shape[-1]),dim=-2).view(*h.shape)
+            hi=self.t[i](self.pool(hi))
+            #Residual connection
+            if i<len(self.t)-1:
+                h=h+hi
+            else:
+                h=hi
+        
+        return h
+
+#Example usage
+#    net=einnet(1,16,64,1,2,einpool_ab())
 ```
