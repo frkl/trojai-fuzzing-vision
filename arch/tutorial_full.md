@@ -570,6 +570,7 @@ c_0' \sum_i x_{ii}^2
 + \ldots
 \end{aligned}
 ```
+
 What's different from regular 2D permutation invariance are terms involving diagonal and transpose. Also all tensor contractions here are at or below $O(N)$ compute for input size $\sqrt{N}\times \sqrt{N}$, which is exponentially less compute than $O(N^2)$ for the default Taylor series.
 
 </details>
