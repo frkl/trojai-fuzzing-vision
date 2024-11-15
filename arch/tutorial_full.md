@@ -157,13 +157,16 @@ y=f\left( \begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix} \right) =f\l
 
 <details>
 
+
 <summary> 
 Solution
 </summary>
 
 
 According to equivariant constraints, the coefficients of the Taylor series satisfy
+
 ```math
+
 \begin{aligned}
 a = & a \\
 \begin{bmatrix} b_0 & b_1 & b_2 & b_3\end{bmatrix}  = &
@@ -184,9 +187,13 @@ a = & a \\
 \end{bmatrix} 
 & \ldots
 \end{aligned}
+
 ```
+
 Which means there are 6 free parameters up to order-2.
+
 ```math
+
 \begin{aligned}
 b_0=b_1=&b_2=b_3 \\
 c_{00}=c_{11}=&c_{22}=c_{33} \\
@@ -194,12 +201,15 @@ c_{01}=c_{12}=&c_{23}=c_{30} \\
 c_{02}=c_{13}=&c_{20}=c_{31} \\
 c_{03}=c_{10}=&c_{21}=c_{32} \\
 \end{aligned}
+
 ```
+
 Note: considering Hessian transpose symmetry, we would additionally have $c_{ij}=c_{ji}$ and reduce number of free parameters to 5. For now, let us assume that multiply among $x_i$ does not commute.
 
 The parameterization with 6 parameters has an unrolled circular convolution on the order-2 term.
 
 ```math
+
 \begin{aligned}
 y=&f\left( \begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix} \right)\\
 = & a + 
@@ -215,11 +225,13 @@ y=&f\left( \begin{bmatrix}x_{0} & x_{1} & x_{2} & x_{3}\end{bmatrix} \right)\\
 \begin{bmatrix} x_{0} \\ x_{1} \\ x_{2} \\ x_{3} \end{bmatrix}
 + \ldots
 \end{aligned}
+
 ```
 
 Computing the 2nd order term naively would require $N^2+N$ multiplies for length-$N$ input. A simplification like
 
 ```math
+
 \begin{aligned}
 &\begin{bmatrix} x_0 & x_{1} & x_{2} & x_3\end{bmatrix}
 \begin{bmatrix} 
@@ -236,7 +248,9 @@ Computing the 2nd order term naively would require $N^2+N$ multiplies for length
 & + \frac{c_0+c_2}{2} (x_1+x_3)^2 + \frac{c_0-c_2}{2} (x_1-x_3)^2 \\ 
 
 \end{aligned}
+
 ```
+
 In the spirit of the [Butterfly Algorithm](https://en.wikipedia.org/wiki/Butterfly_diagram) for fourier transforms for 1 step would reduce number of multiples down to $\frac{N^2}{2}+N$.
 
 
