@@ -1,6 +1,6 @@
 # Einsum Pooling: nD permutation symmetric neural nets from the ground up
 
-
+Here we list a few applications that s
 
 ## III Use cases
 
