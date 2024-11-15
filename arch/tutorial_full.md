@@ -426,7 +426,7 @@ f&\left( \begin{bmatrix}x_{0} & x_{1}\end{bmatrix}, \begin{bmatrix}x_{2} & x_{3}
 \begin{bmatrix}x_0+x_2 \\ x_1+x_3\end{bmatrix}
 \end{aligned}
 ```
-The size of order-$k$ coefficient blocks for processing length-$H$ latent vectors is $H^k$. This is already much better than the full coefficients $(NH)^k$ for a set of $N$ vectors but is still large. Now, the bread and butter of deep learning comes in, namely 1) stacking more layers, 2) low-rank factorization and 3) non-linearities which we'll discuss more in Section II.
+The size of order-k coefficient blocks for processing length-H latent vectors is $H^k$. This is already much better than the full coefficients $(NH)^k$ for a set of N vectors but is still large. Now, the bread and butter of deep learning comes in, namely 1) stacking more layers, 2) low-rank factorization and 3) non-linearities which we'll discuss more in Section II.
 
 </details>
 
