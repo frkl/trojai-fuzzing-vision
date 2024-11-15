@@ -538,40 +538,6 @@ According to the equivariant constraint, the coefficients of the Taylor series s
 \end{aligned}
 ```
 
-Solving the equations gives the following parameterization with 11 degrees of freedom
-```math
-\begin{aligned}
-y=&f\left( \begin{bmatrix}x_{00} & x_{01} \\ x_{10} & x_{11}\end{bmatrix} \right)\\
-= & a + 
-\begin{bmatrix} b_0 & b_1 & b_1 &b_0\end{bmatrix} 
-\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11} \end{bmatrix} +
-\begin{bmatrix} x_{00} & x_{01} & x_{10} & x_{11}\end{bmatrix}
-\begin{bmatrix} 
-    c_{0} & c_{1} & c_{2} & c_{3}\\
-    c_{4} & c_{5} & c_{6} & c_{7}\\
-    c_{7} & c_{6} & c_{5} & c_{4}\\
-    c_{3} & c_{2} & c_{1} & c_{0}
-\end{bmatrix} 
-\begin{bmatrix} x_{00} \\ x_{01} \\ x_{10} \\ x_{11} \end{bmatrix}
-+ \ldots
-\end{aligned}
-```
-With Hessian transpose symmetry, we may further have $c_1=c_4$ and $c_2=c_7$ which reduces free parameters count down to 9, still 3 more than regular 2D permutation invariance. If you squint really hard (and maybe try Exercise D), there exists a tensor contraction form:
-```math
-\begin{aligned}
-f&\left( \{x_{ij}\} \right)\\
-= & a + b_0' \sum_i x_{ii} + b_1' \sum_i \sum_j x_{ij} + 
-c_0' \sum_i x_{ii}^2 
-+ c_1' \sum_i x_{ii}\sum_j x_{ij} \\
-&+ c_2' \sum_i x_{ii}\sum_j x_{ji} 
-+ c_3' \sum_i x_{ii}\sum_j x_{jj}
-+ c_5' \sum_i \sum_j x_{ij}^2
-+ c_6' \sum_i \sum_j x_{ij} x_{ji}  
-+ \ldots
-\end{aligned}
-```
-
-What's different from regular 2D permutation invariance are terms involving diagonal and transpose. Also all tensor contractions here are at or below $O(N)$ compute for input size $\sqrt{N}\times \sqrt{N}$, which is exponentially less compute than $O(N^2)$ for the default Taylor series.
 
 </details>
 
