@@ -605,7 +605,7 @@ b_{20} & b_{21} & b_{22}
 \ldots
 \end{aligned}
 ```
-The equivariant constraints are for any $P$
+The equivariant constraints are for any P
 ```math
 \begin{bmatrix}
 b_{00} & b_{01} & b_{02} \\ 
