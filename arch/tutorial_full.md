@@ -693,7 +693,13 @@ In the following table we list a few common problems with different types of per
 
 | Problem       | Illustration  | Symmetry type  | Dependency |
 | ------------- |:-------------:|:--------------:|:---------- |
-|               |               |                |            |
+|               |               |   `aH`         |            |
+|               |               |   `aa`         |            |
+|               |               |   `ab`         |            |
+|               |               |   `abH`        |            |
+|               |               |   `abH`        |    $a\rightarrow b$     |
+|               |               |   `abc`        |            |
+|               |               |   `aab`        |            |
 
 Multiple dimensions, joint permutation and dependency are common themes here. To aid discussions, we also use a custom notation to describe the specific type of permutation symmetry, to capture both the input shape and the unique permutation axes. A fully independent batch dimension Z and a non-symmetric latent dimension H may be added optionally.
 

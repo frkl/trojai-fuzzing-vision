@@ -9,6 +9,22 @@ Here we list a few applications that s
 
 ### III.2 $X_{aa}$-type symmetry for knowledge graph completion
 
+
+### ARC-AGI
+sudoku-type (abc)
+4cd1b7b2.json
+
+point cloud (abc)
+00576224.json
+ca8de6ea
+
+section fill (aac)
+a406ac07.json
+
+physics(abc)
+45bbe264
+
+
 Knowledge graph completion is another problem class where nD permutation symmetry is helpful. 
 
 A knowledge graph stores knowledge as a collection of (entity_1, relation, entity_2) tuples, e.g. "" can be represented as a tuple (x,x,x). It is a natural yet powerful way of storing knowledge. 
