@@ -4,7 +4,18 @@ Here we list a few applications that s
 
 ## III Use cases
 
-### III.1 $X_{ab}$-type symmetry for matrix inverse
+### III.1 Learning matrix operations
+
+
+
+### III.2 Knowledge graph completion
+
+
+### III.3 Learning a Sudoku solver
+### III.4 
+
+
+$X_{ab}$-type symmetry for matrix inverse
 
 
 ### III.2 $X_{aa}$-type symmetry for knowledge graph completion
@@ -21,8 +32,11 @@ ca8de6ea
 section fill (aac)
 a406ac07.json
 
+abc
+4f537728
 physics(abc)
 45bbe264
+1a2e2828 (invariant)
 
 
 Knowledge graph completion is another problem class where nD permutation symmetry is helpful. 
