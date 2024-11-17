@@ -6,13 +6,21 @@ Here we list a few applications that s
 
 ### III.1 Learning matrix operations
 
+Not the most efficient, but flexible.
 
+### III.1 Learning embeddings
+
+### Few-shot learning
 
 ### III.2 Knowledge graph completion
 
+Use patterns in known relations to infer unknown relations
+
 
 ### III.3 Learning a Sudoku solver
-### III.4 
+
+### III.4 A few ARC-AGI problems
+
 
 
 $X_{ab}$-type symmetry for matrix inverse
