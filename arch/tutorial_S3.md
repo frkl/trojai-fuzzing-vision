@@ -1,25 +1,119 @@
 # Einsum Pooling: nD permutation symmetric neural nets from the ground up
 
-Here we list a few applications that s
+
 
 ## III Use cases
 
-### III.1 Learning matrix operations
+### III.1 Matrix pseudo inverse
 
-Not the most efficient, but flexible.
+A good sanity check of a permutation equivariant network is whether it can learn matrix inverse. The Moore-Penrose inverse is defined as
+```math
+A^{+}=(A^TA)^{-1}A^T
+```
+For any permutation matrix $P$ the Moore-Penrose inverse satisfies
+```math
+(PA)^+=A^+ P^T \\
+(AP)^+=P^T A^+
+```
+So $F(A)=(A^+)^T$ is row-column permutation equivariant. In fact, it is further equivariant to arbitrary rotation.
 
-### III.1 Learning embeddings
-
-### Few-shot learning
-
-### III.2 Knowledge graph completion
-
-Use patterns in known relations to infer unknown relations
+In this exercise, we will learn an `abH`-type equivariant EinNet to perform Moore-Penrose inverse on $8\times 16 matrices$ from 100 training examples to demonstrate its capability.
 
 
-### III.3 Learning a Sudoku solver
+The python implementation is as the follows. We use a 6-stack EinNet backbone with 64 hidden dims and 16 head dims, and minimize L2 loss against ground truth using AdamW with lr=1e-3.
 
-### III.4 A few ARC-AGI problems
+```python
+import torch
+import torch.optim as optim
+ntrain,ntest,H,W=100,100,8,16
+
+torch.manual_seed(0)
+x_train=torch.Tensor(ntrain,H,W).normal_().cuda()
+y_train=torch.linalg.pinv(x_train).transpose(-1,-2)
+x_test=torch.Tensor(ntest,H,W).normal_().cuda()
+y_test=torch.linalg.pinv(x_test).transpose(-1,-2)
+
+net=einnet(ninput=1,nh0=16,nh=64,noutput=1,nstacks=6,pool=einpool_ab()).cuda()
+
+opt=optim.AdamW(net.parameters(),lr=1e-3,weight_decay=1e-3)
+
+for i in range(10000):
+    opt.zero_grad()
+    pred=net(x_train.unsqueeze(-1)).squeeze(-1)
+    loss=((y_train-pred)**2).mean()
+    loss.backward()
+    opt.step()
+    
+    if i%100==0:
+        with torch.no_grad():
+            pred=net(x_train.unsqueeze(-1)).squeeze(-1)
+            err_train=(torch.bmm(pred,x_train.transpose(-1,-2))-torch.eye(H).cuda())
+            err_train=err_train.abs().mean()
+            
+            pred=net(x_test.unsqueeze(-1)).squeeze(-1)
+            err_test=(torch.bmm(pred,x_test.transpose(-1,-2))-torch.eye(H).cuda())
+            err_test=err_test.abs().mean()
+            #loss_test=(y_test-pred).abs().mean()
+        
+        print('Iter %d, mae_train %.4f, mae_test %.4f'%(i,err_train,err_test))
+```
+
+Let us plot the element-wise mean absolute error between $A^+A$ and $I$ over the course of learning. 
+
+With only 20k parameters (roughly the size of a $128\times128$ linear layer) and 100 training points, we get to 0.006 MAE which is 2 orders of magnitudes below random 0.0625 MAE. 
+
+
+### III.1 Knowledge graph completion (aa)
+
+Knowledge graphs
+
+logic rules
+Conveniently, logic rules tend to be matrix multiplication.
+
+
+
+Alyawarra Kinship
+ConvE split
+vs ConvE
+
+Synthetic example => 
+
+
+
+### III.3 Few-shot learning? (ab?abc?)
+
+
+### III.4 Learning a Sudoku solver (abcde)
+
+In the last exercise we'll learn a neural network that solves Sudoku puzzles. A Sudoku board is a 9x9 grid, where each row, column, and 3x3 subgrid must contain all of the digits from 1 to 9 exactly once. Let us represent a Sudoku board as an $X_{ixjyc2}$ tensor as Figure 1, we see many permutation symmetries
+
+1. Row and column group-level permutations.
+2. Within each group, rows and columns can be permuted. The row/column permutation can be done differently for different row/column groups.
+3. Permutations of digits 1 to 9.
+
+This means that a Sudoku Solver $Y_{ixjyc}=F(X_{ixjyc2})$ has permutation equivariance type `ixjycH` with dependencies `i->x` and `j->y`. The list of compatible einsum terms is quite long, but let us start from implementing just the following.
+
+
+Let us generate 100 Sudoku puzzles for training and 100 for evaluation.
+
+Accuracy is 100% , meaning that all Sudoku puzzles in the test set has been be solved. 
+
+Let us also try one of the more compact Sudoku puzzles from Wikipedia.
+
+
+There is also a Sudoku-like ARC-AGI problem, and an `abc`-type permutation equivariant network can solve it by training only on the 3 given examples.
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
