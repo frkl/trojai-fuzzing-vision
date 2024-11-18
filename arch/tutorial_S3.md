@@ -95,6 +95,7 @@ This means that a Sudoku Solver $Y_{ixjyc}=F(X_{ixjyc2})$ has permutation equiva
 
 
 Let us generate 100 Sudoku puzzles for training and 100 for evaluation.
+https://www.ocf.berkeley.edu/~arel/sudoku/main.html
 
 Accuracy is 100% , meaning that all Sudoku puzzles in the test set has been be solved. 
 
