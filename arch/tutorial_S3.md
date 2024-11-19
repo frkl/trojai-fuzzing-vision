@@ -4,7 +4,11 @@
 
 ## III Use cases
 
+<<<<<<< HEAD
+Now that we have designed a network, let's use a variety of toy problems to test its capability. 
+=======
 ### III.1 Matrix pseudo inverse
+>>>>>>> ec2248b38fb4648d8874314d22131e7d30090d7d
 
 A good sanity check of a permutation equivariant network is whether it can learn matrix inverse. The Moore-Penrose inverse is defined as
 ```math
@@ -17,6 +21,15 @@ For any permutation matrix $P$ the Moore-Penrose inverse satisfies
 ```
 So $F(A)=(A^+)^T$ is row-column permutation equivariant. In fact, it is further equivariant to arbitrary rotation.
 
+<<<<<<< HEAD
+
+### III.1 Learning matrix operations
+
+
+
+
+
+=======
 In this exercise, we will learn an `abH`-type equivariant EinNet to perform Moore-Penrose inverse on $8\times 16 matrices$ from 100 training examples to demonstrate its capability.
 
 
@@ -121,6 +134,7 @@ There is also a Sudoku-like ARC-AGI problem, and an `abc`-type permutation equiv
 $X_{ab}$-type symmetry for matrix inverse
 
 
+>>>>>>> ec2248b38fb4648d8874314d22131e7d30090d7d
 ### III.2 $X_{aa}$-type symmetry for knowledge graph completion
 
 
