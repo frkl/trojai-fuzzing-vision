@@ -25,7 +25,7 @@ So $F(A)=(A^+)^T$ is row-column permutation equivariant. In fact, it is further 
 
 
 
-In this exercise, we will learn an `abH`-type equivariant EinNet to perform Moore-Penrose inverse on $8\times 16 matrices$ from 100 training examples to demonstrate its capability.
+In this exercise, we will learn an `abH`-type equivariant EinNet to perform Moore-Penrose inverse on $8\times 16$ matrices from 100 training examples to demonstrate its capability.
 
 
 The python implementation is as the follows. We use a 6-stack EinNet backbone with 64 hidden dims and 16 head dims, and minimize L2 loss against ground truth using AdamW with lr=1e-3.
